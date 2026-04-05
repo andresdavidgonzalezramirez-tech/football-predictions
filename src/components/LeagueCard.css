@@ -1,0 +1,263 @@
+/* Dark Theme by Default */
+.league-card {
+  background: #1e293b;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  margin-bottom: 16px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: 1px solid #334155;
+}
+
+.league-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+  transform: translateY(-2px);
+  border-color: #475569;
+}
+
+/* League Header */
+.league-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s ease;
+}
+
+.league-card-header:hover {
+  background-color: #2d3748;
+}
+
+.league-card-header:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: -2px;
+}
+
+.league-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+}
+
+.league-logo {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: #0f172a;
+  padding: 4px;
+}
+
+.league-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.league-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin: 0;
+}
+
+.league-country {
+  font-size: 14px;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.league-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fixtures-count {
+  font-size: 14px;
+  font-weight: 500;
+  color: #93c5fd;
+  background: #1e3a8a;
+  padding: 4px 12px;
+  border-radius: 12px;
+}
+
+.expand-icon {
+  color: #94a3b8;
+  transition: transform 0.3s ease;
+}
+
+.expand-icon.expanded {
+  transform: rotate(180deg);
+}
+
+/* Fixtures List */
+.fixtures-list {
+  padding: 0 20px 20px 20px;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fixture-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: #0f172a;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid #334155;
+}
+
+.fixture-item:hover {
+  background: #1e293b;
+  border-color: #3b82f6;
+  transform: translateX(4px);
+}
+
+.fixture-item:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.fixture-item:last-child {
+  margin-bottom: 0;
+}
+
+.fixture-teams {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.team-row {
+  display: flex;
+  align-items: center;
+}
+
+.team-name {
+  font-size: 15px;
+  font-weight: 500;
+  color: #e2e8f0;
+}
+
+.home-team {
+  font-weight: 600;
+}
+
+.fixture-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  text-align: right;
+}
+
+.fixture-date {
+  font-size: 13px;
+  color: #94a3b8;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.status-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.status-badge.live {
+  color: white;
+  background: #dc2626;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.odds-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #86efac;
+  background: #14532d;
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Empty State */
+.no-fixtures {
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.no-fixtures p {
+  color: #94a3b8;
+  font-size: 14px;
+  margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .league-card-header {
+    padding: 16px;
+  }
+
+  .league-logo {
+    width: 40px;
+    height: 40px;
+  }
+
+  .league-name {
+    font-size: 16px;
+  }
+
+  .league-country {
+    font-size: 13px;
+  }
+
+  .fixtures-list {
+    padding: 0 16px 16px 16px;
+  }
+
+  .fixture-item {
+    padding: 12px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .fixture-meta {
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .team-name {
+    font-size: 14px;
+  }
+}

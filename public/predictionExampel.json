@@ -1,0 +1,654 @@
+{
+  "data": {
+    "id": 19427541,
+    "sport_id": 1,
+    "league_id": 8,
+    "season_id": 25583,
+    "stage_id": 77476879,
+    "group_id": null,
+    "aggregate_id": null,
+    "round_id": 372203,
+    "state_id": 1,
+    "venue_id": 343762,
+    "name": "Everton vs Tottenham Hotspur",
+    "starting_at": "2025-10-26 17:30:00",
+    "result_info": null,
+    "leg": "1/1",
+    "details": null,
+    "length": 90,
+    "placeholder": false,
+    "has_odds": true,
+    "has_premium_odds": true,
+    "starting_at_timestamp": 1761496200,
+    "participants": [
+      {
+        "id": 13,
+        "sport_id": 1,
+        "country_id": 462,
+        "venue_id": 343762,
+        "gender": "male",
+        "name": "Everton",
+        "short_code": "EVE",
+        "image_path": "https://cdn.sportmonks.com/images/soccer/teams/13/13.png",
+        "founded": 1878,
+        "type": "domestic",
+        "placeholder": false,
+        "last_played_at": "2025-10-18 14:00:00",
+        "meta": {
+          "location": "home",
+          "winner": null,
+          "position": null
+        }
+      },
+      {
+        "id": 6,
+        "sport_id": 1,
+        "country_id": 462,
+        "venue_id": 281313,
+        "gender": "male",
+        "name": "Tottenham Hotspur",
+        "short_code": "TOT",
+        "image_path": "https://cdn.sportmonks.com/images/soccer/teams/6/6.png",
+        "founded": 1882,
+        "type": "domestic",
+        "placeholder": false,
+        "last_played_at": "2025-10-19 13:00:00",
+        "meta": {
+          "location": "away",
+          "winner": null,
+          "position": null
+        }
+      }
+    ],
+    "league": {
+      "id": 8,
+      "sport_id": 1,
+      "country_id": 462,
+      "name": "Premier League",
+      "active": true,
+      "short_code": "UK PL",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/8/8.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-10-19 15:30:00",
+      "category": 1,
+      "has_jerseys": false
+    },
+    "venue": {
+      "id": 343762,
+      "country_id": 462,
+      "city_id": 51090,
+      "name": "Hill Dickinson Stadium",
+      "address": "Bramley-Moore Dock, Vauxhall",
+      "zipcode": null,
+      "latitude": "53.42499",
+      "longitude": "-3.00275",
+      "capacity": 52888,
+      "image_path": null,
+      "city_name": null,
+      "surface": "grass",
+      "national_team": false
+    },
+    "state": {
+      "id": 1,
+      "state": "NS",
+      "name": "Not Started",
+      "short_name": "NS",
+      "developer_name": "NS"
+    },
+    "scores": [],
+    "events": [],
+    "predictions": [
+      {
+        "id": 23339641,
+        "fixture_id": 19427541,
+        "predictions": {
+          "yes": 3.43,
+          "no": 96.57
+        },
+        "type_id": 327,
+        "type": {
+          "id": 327,
+          "name": "Away Over/Under 3.5 Probability",
+          "code": "away-over-under-3_5_probability",
+          "developer_name": "AWAY_OVER_UNDER_3_5_PROBABILITY",
+          "model_type": "prediction",
+          "stat_group": null
+        }
+      },
+      {
+        "id": 23339621,
+        "fixture_id": 19427541,
+        "predictions": {
+          "home": 37.37,
+          "away": 35.47,
+          "draw": 27.12
+        },
+        "type_id": 237,
+        "type": {
+          "id": 237,
+          "name": "Fulltime Result Probability",
+          "code": "fulltime-result-probability",
+          "developer_name": "FULLTIME_RESULT_PROBABILITY",
+          "model_type": "prediction",
+          "stat_group": null
+        }
+      },
+      {
+        "id": 23339627,
+        "fixture_id": 19427541,
+        "predictions": {
+          "yes": 70.36,
+          "no": 29.64
+        },
+        "type_id": 234,
+        "type": {
+          "id": 234,
+          "name": "Over/Under 1.5 Probability",
+          "code": "over-under-1_5-probability",
+          "developer_name": "OVER_UNDER_1_5_PROBABILITY",
+          "model_type": "prediction",
+          "stat_group": null
+        }
+      },
+      {
+        "id": 23339628,
+        "fixture_id": 19427541,
+        "predictions": {
+          "yes": 45.13,
+          "no": 54.87
+        },
+        "type_id": 235,
+        "type": {
+          "id": 235,
+          "name": "Over/Under 2.5 Probability",
+          "code": "over-under-2_5-probability",
+          "developer_name": "OVER_UNDER_2_5_PROBABILITY",
+          "model_type": "prediction",
+          "stat_group": null
+        }
+      },
+      {
+        "id": 23339636,
+        "fixture_id": 19427541,
+        "predictions": {
+          "yes": 13.01,
+          "no": 86.99
+        },
+        "type_id": 330,
+        "type": {
+          "id": 330,
+          "name": "Home Over/Under 2.5 Probability",
+          "code": "home-over-under-2_5_probability",
+          "developer_name": "HOME_OVER_UNDER_2_5_PROBABILITY",
+          "model_type": "prediction",
+          "stat_group": null
+        }
+      },
+      {
+        "id": 23339637,
+        "fixture_id": 19427541,
+        "predictions": {
+          "yes": 3.87,
+          "no": 96.13
+        },
+        "type_id": 326,
+        "type": {
+          "id": 326,
+          "name": "Home Over/Under 3.5 Probability",
+          "code": "home-over-under-3_5_probability",
+          "developer_name": "HOME_OVER_UNDER_3_5_PROBABILITY",
+          "model_type": "prediction",
+          "stat_group": null
+        }
+      },
+      {
+        "id": 23339642,
+        "fixture_id": 19427541,
+        "predictions": {
+          "yes": 94.73,
+          "no": 2.19,
+          "equal": 3.08
+        },
+        "type_id": 1690,
+        "type": {
+          "id": 1690,
+          "name": "Corners Over/Under 4 Probability",
+          "code": "corners-over-under-4-probability",
+          "developer_name": "CORNERS_OVER_UNDER_4_PROBABILITY",
+          "model_type": "prediction",
+          "stat_group": null
+        }
+      },
+      {
+        "id": 23339639,
+        "fixture_id": 19427541,
+        "predictions": {
+          "yes": 32.97,
+          "no": 67.03
+        },
+        "type_id": 332,
+        "type": {
+          "id": 332,
+          "name": "Away Over/Under 1.5 Probability",
+          "code": "away-over-under-1_5_probability",
+          "developer_name": "AWAY_OVER_UNDER_1_5_PROBABILITY",
+          "model_type": "prediction",
+          "stat_group": null
+        }
+      },
+      {
+        "id": 23339640,
+        "fixture_id": 19427541,
+        "predictions": {
+          "yes": 12,
+          "no": 88
+        },
+        "type_id": 328,
+        "type": {
+          "id": 328,
+          "name": "Away Over/Under 2.5 Probability",
+          "code": "away-over-under-2_5_probability",
+          "developer_name": "AWAY_OVER_UNDER_2_5_PROBABILITY",
+          "model_type": "prediction",
+          "stat_group": null
+        }
+      },
+      {
+        "id": 23339644,
+        "fixture_id": 19427541,
+        "predictions": {
+          "yes": 89.42,
+          "no": 5.27,
+          "equal": 5.31
+        },
+        "type_id": 1683,
+        "type": {
+          "id": 1683,
+          "name": "Corners Over/Under 5 Probability",
+          "code": "corners-over-under-5-probability",
+          "developer_name": "CORNERS_OVER_UNDER_5_PROBABILITY",
+          "model_type": "prediction",
+          "stat_group": null
+        }
+      },
+      {
+        "id": 23339653,
+        "fixture_id": 19427541,
+        "predictions": {
+          "yes": 36.44,
+          "no": 63.55,
+          "equal": null
+        },
+        "type_id": 1585,
+        "type": {
+          "id": 1585,
+          "name": "Corners Over/Under 10.5 Probability",
+          "code": "corners-over-under-10_5-probability",
+          "developer_name": "CORNERS_OVER_UNDER_10_5_PROBABILITY",
+          "model_type": "prediction",
+          "stat_group": null
+        }
+      },
+      {
+        "id": 23339646,
+        "fixture_id": 19427541,
+        "predictions": {
+          "yes": 81.6,
+          "no": 10.58,
+          "equal": 7.82
+        },
+        "type_id": 1685,
+        "type": {
+          "id": 1685,
+          "name": "Corners Over/Under 6 Probability",
+          "code": "corners-over-under-6-probability",
+          "developer_name": "CORNERS_OVER_UNDER_6_PROBABILITY",
+          "model_type": "prediction",
+          "stat_group": null
+        }
+      },
+      {
+        "id": 23339623,
+        "fixture_id": 19427541,
+        "predictions": {
+          "home": 44.52,
+          "away": 46.76,
+          "draw": 8.72
+        },
+        "type_id": 238,
+        "type": {
+          "id": 238,
+          "name": "Team To Score First Probability",
+          "code": "team_to_score_first-probability",
+          "developer_name": "TEAM_TO_SCORE_FIRST_PROBABILITY",
+          "model_type": "prediction",
+          "stat_group": null
+        }
+      },
+      {
+        "id": 23339615,
+        "fixture_id": 19427541,
+        "predictions": {
+          "yes": 50.6,
+          "no": 49.4
+        },
+        "type_id": 231,
+        "type": {
+          "id": 231,
+          "name": "Both Teams To Score Probability",
+          "code": "both-teams-to-score-probability",
+          "developer_name": "BTTS_PROBABILITY",
+          "model_type": "prediction",
+          "stat_group": null
+        }
+      },
+      {
+        "id": 23339625,
+        "fixture_id": 19427541,
+        "predictions": {
+          "draw_home": 64.49,
+          "draw_away": 62.59,
+          "home_away": 72.84
+        },
+        "type_id": 239,
+        "type": {
+          "id": 239,
+          "name": "Double Chance Probability",
+          "code": "double_chance-probability",
+          "developer_name": "DOUBLE_CHANCE_PROBABILITY",
+          "model_type": "prediction",
+          "stat_group": null
+        }
+      },
+      {
+        "id": 23339632,
+        "fixture_id": 19427541,
+        "predictions": {
+          "yes": 12.48,
+          "no": 87.52
+        },
+        "type_id": 1679,
+        "type": {
+          "id": 1679,
+          "name": "Over/Under 4.5 Probability",
+          "code": "over-under-4_5-probability",
+          "developer_name": "OVER_UNDER_4_5_PROBABILITY",
+          "model_type": "prediction",
+          "stat_group": null
+        }
+      },
+      {
+        "id": 23339633,
+        "fixture_id": 19427541,
+        "predictions": {
+          "yes": 69.17,
+          "no": 30.83
+        },
+        "type_id": 334,
+        "type": {
+          "id": 334,
+          "name": "Home Over/Under 0.5 Probability",
+          "code": "home-over-under-0_5_probability",
+          "developer_name": "HOME_OVER_UNDER_0_5_PROBABILITY",
+          "model_type": "prediction",
+          "stat_group": null
+        }
+      },
+      {
+        "id": 23339635,
+        "fixture_id": 19427541,
+        "predictions": {
+          "yes": 34.42,
+          "no": 65.58
+        },
+        "type_id": 331,
+        "type": {
+          "id": 331,
+          "name": "Home Over/Under 1.5 Probability",
+          "code": "home-over-under-1_5_probability",
+          "developer_name": "HOME_OVER_UNDER_1_5_PROBABILITY",
+          "model_type": "prediction",
+          "stat_group": null
+        }
+      },
+      {
+        "id": 23339647,
+        "fixture_id": 19427541,
+        "predictions": {
+          "yes": 71.51,
+          "no": 18.4,
+          "equal": 10.09
+        },
+        "type_id": 1686,
+        "type": {
+          "id": 1686,
+          "name": "Corners Over/Under 7 Probability",
+          "code": "corners-over-under-7-probability",
+          "developer_name": "CORNERS_OVER_UNDER_7_PROBABILITY",
+          "model_type": "prediction",
+          "stat_group": null
+        }
+      },
+      {
+        "id": 23339648,
+        "fixture_id": 19427541,
+        "predictions": {
+          "yes": 59.9,
+          "no": 28.49,
+          "equal": 11.6
+        },
+        "type_id": 1689,
+        "type": {
+          "id": 1689,
+          "name": "Corners Over/Under 8 Probability",
+          "code": "corners-over-under-8-probability",
+          "developer_name": "CORNERS_OVER_UNDER_8_PROBABILITY",
+          "model_type": "prediction",
+          "stat_group": null
+        }
+      },
+      {
+        "id": 23339650,
+        "fixture_id": 19427541,
+        "predictions": {
+          "yes": 47.86,
+          "no": 40.1,
+          "equal": 12.04
+        },
+        "type_id": 1687,
+        "type": {
+          "id": 1687,
+          "name": "Corners Over/Under 9 Probability",
+          "code": "corners-over-under-9-probability",
+          "developer_name": "CORNERS_OVER_UNDER_9_PROBABILITY",
+          "model_type": "prediction",
+          "stat_group": null
+        }
+      },
+      {
+        "id": 23339651,
+        "fixture_id": 19427541,
+        "predictions": {
+          "yes": 36.44,
+          "no": 52.14,
+          "equal": 11.41
+        },
+        "type_id": 1688,
+        "type": {
+          "id": 1688,
+          "name": "Corners Over/Under 10 Probability",
+          "code": "corners-over-under-10-probability",
+          "developer_name": "CORNERS_OVER_UNDER_10_PROBABILITY",
+          "model_type": "prediction",
+          "stat_group": null
+        }
+      },
+      {
+        "id": 23339617,
+        "fixture_id": 19427541,
+        "predictions": {
+          "home_home": 20.06,
+          "home_away": 2.68,
+          "home_draw": 5.82,
+          "away_home": 2.67,
+          "away_away": 20.02,
+          "away_draw": 5.71,
+          "draw_draw": 14.88,
+          "draw_home": 13.68,
+          "draw_away": 14.49
+        },
+        "type_id": 232,
+        "type": {
+          "id": 232,
+          "name": "Half Time/Full Time Probability",
+          "code": "half-time-full-time-probability",
+          "developer_name": "HTFT_PROBABILITY",
+          "model_type": "prediction",
+          "stat_group": null
+        }
+      },
+      {
+        "id": 23339619,
+        "fixture_id": 19427541,
+        "predictions": {
+          "home": 29.36,
+          "away": 28.26,
+          "draw": 42.39
+        },
+        "type_id": 233,
+        "type": {
+          "id": 233,
+          "name": "First Half Winner Probability",
+          "code": "first-half-winner",
+          "developer_name": "FIRST_HALF_WINNER_PROBABILITY",
+          "model_type": "prediction",
+          "stat_group": null
+        }
+      },
+      {
+        "id": 23339655,
+        "fixture_id": 19427541,
+        "predictions": {
+          "yes": 26.48,
+          "no": 63.55,
+          "equal": 9.97
+        },
+        "type_id": 1684,
+        "type": {
+          "id": 1684,
+          "name": "Corners Over/Under 11 Probability",
+          "code": "corners-over-under-11-probability",
+          "developer_name": "CORNERS_OVER_UNDER_11_PROBABILITY",
+          "model_type": "prediction",
+          "stat_group": null
+        }
+      },
+      {
+        "id": 23339626,
+        "fixture_id": 19427541,
+        "predictions": {
+          "scores": {
+            "0-0": 8.72,
+            "0-1": 10.25,
+            "0-2": 5.96,
+            "0-3": 2.45,
+            "1-0": 10.64,
+            "1-1": 12.89,
+            "1-2": 8.07,
+            "1-3": 3.15,
+            "2-0": 6.38,
+            "2-1": 8.12,
+            "2-2": 4.72,
+            "2-3": 2.19,
+            "3-0": 2.87,
+            "3-1": 3.27,
+            "3-2": 2.22,
+            "3-3": 0.78,
+            "Other_1": 3.86,
+            "Other_2": 3.42,
+            "Other_X": 0.01
+          }
+        },
+        "type_id": 240,
+        "type": {
+          "id": 240,
+          "name": "Correct Score Probability",
+          "code": "correct-score-probability",
+          "developer_name": "CORRECT_SCORE_PROBABILITY",
+          "model_type": "prediction",
+          "stat_group": null
+        }
+      },
+      {
+        "id": 23339630,
+        "fixture_id": 19427541,
+        "predictions": {
+          "yes": 23.62,
+          "no": 76.38
+        },
+        "type_id": 236,
+        "type": {
+          "id": 236,
+          "name": "Over/Under 3.5 Probability",
+          "code": "over-under-3_5_probability",
+          "developer_name": "OVER_UNDER_3_5_PROBABILITY",
+          "model_type": "prediction",
+          "stat_group": null
+        }
+      },
+      {
+        "id": 23339638,
+        "fixture_id": 19427541,
+        "predictions": {
+          "yes": 67.5,
+          "no": 32.5
+        },
+        "type_id": 333,
+        "type": {
+          "id": 333,
+          "name": "Away Over/Under 0.5 Probability",
+          "code": "away-over-under-0_5_probability",
+          "developer_name": "AWAY_OVER_UNDER_0_5_PROBABILITY",
+          "model_type": "prediction",
+          "stat_group": null
+        }
+      }
+    ]
+  },
+  "subscription": [
+    {
+      "meta": {
+        "trial_ends_at": "2025-10-31 15:52:19",
+        "ends_at": "2025-10-31 15:52:19",
+        "current_timestamp": 1760896409
+      },
+      "plans": [
+        {
+          "plan": "European Plan",
+          "sport": "Football",
+          "category": "Advanced"
+        }
+      ],
+      "add_ons": [
+        {
+          "add_on": "European Club Tournaments",
+          "sport": "Football",
+          "category": "Plan"
+        },
+        {
+          "add_on": "European Plan Predictions",
+          "sport": "Football",
+          "category": "Predictions"
+        }
+      ],
+      "widgets": []
+    }
+  ],
+  "rate_limit": {
+    "resets_in_seconds": 3380,
+    "remaining": 2992,
+    "requested_entity": "Fixture"
+  },
+  "timezone": "Europe/Copenhagen"
+}

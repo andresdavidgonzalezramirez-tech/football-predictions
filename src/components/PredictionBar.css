@@ -1,0 +1,100 @@
+.prediction-bar-container {
+  margin: 1rem 0;
+  width: 100%;
+}
+
+.prediction-bar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.prediction-label {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.prediction-stats {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.prediction-percentage {
+  font-weight: 700;
+  color: #2563eb;
+  font-size: 1rem;
+}
+
+.prediction-odds {
+  font-size: 0.875rem;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+}
+
+.prediction-bar-track {
+  width: 100%;
+  height: 1.5rem;
+  background-color: #e5e7eb;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.prediction-bar-fill {
+  height: 100%;
+  transition: width 0.6s ease-in-out;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 0.5rem;
+}
+
+/* Color variants based on probability */
+.prediction-bar-fill.high {
+  background: linear-gradient(90deg, #10b981, #059669);
+}
+
+.prediction-bar-fill.medium {
+  background: linear-gradient(90deg, #f59e0b, #d97706);
+}
+
+.prediction-bar-fill.low {
+  background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+
+/* Responsive design */
+@media (max-width: 640px) {
+  .prediction-bar-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .prediction-stats {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .prediction-label {
+    font-size: 0.875rem;
+  }
+
+  .prediction-percentage {
+    font-size: 0.875rem;
+  }
+
+  .prediction-odds {
+    font-size: 0.8125rem;
+  }
+
+  .prediction-bar-track {
+    height: 1.25rem;
+  }
+}
