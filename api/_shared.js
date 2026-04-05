@@ -1,4 +1,6 @@
+/* eslint-env node */
 export const SPORTMONKS_BASE = 'https://api.sportmonks.com/v3/football';
+export const SPORTMONKS_CORE_BASE = 'https://api.sportmonks.com/v3';
 
 export const setCorsHeaders = (res) => {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -7,7 +9,7 @@ export const setCorsHeaders = (res) => {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 };
 
-export const getApiToken = () => process.env.VITE_SPORTMONKS_API_TOKEN;
+export const getApiToken = () => process.env.SPORTMONKS_API_TOKEN || process.env.VITE_SPORTMONKS_API_TOKEN;
 
 export const handleRequestGuards = (req, res) => {
   setCorsHeaders(res);
@@ -34,7 +36,13 @@ export const handleRequestGuards = (req, res) => {
   return true;
 };
 
-export const forwardSportmonks = async ({ res, path, query = {}, defaultParams = {} }) => {
+export const forwardSportmonks = async ({
+  res,
+  path,
+  query = {},
+  defaultParams = {},
+  baseUrl = SPORTMONKS_BASE,
+}) => {
   const token = getApiToken();
   const params = new URLSearchParams({
     ...defaultParams,
@@ -42,7 +50,7 @@ export const forwardSportmonks = async ({ res, path, query = {}, defaultParams =
     api_token: token,
   });
 
-  const url = `${SPORTMONKS_BASE}${path}?${params.toString()}`;
+  const url = `${baseUrl}${path}?${params.toString()}`;
 
   const response = await fetch(url);
   const data = await response.json();

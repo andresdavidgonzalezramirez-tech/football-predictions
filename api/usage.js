@@ -1,7 +1,7 @@
 /**
  * Vercel Serverless Function - API usage proxy
  */
-import { handleRequestGuards, forwardSportmonks } from './_shared.js';
+import { handleRequestGuards, forwardSportmonks, SPORTMONKS_CORE_BASE } from './_shared.js';
 
 export default async function handler(req, res) {
   if (!handleRequestGuards(req, res)) {
@@ -13,6 +13,7 @@ export default async function handler(req, res) {
       res,
       path: '/my/usage',
       query: req.query,
+      baseUrl: SPORTMONKS_CORE_BASE,
     });
   } catch (error) {
     return res.status(500).json({

@@ -1,0 +1,11 @@
+services:
+  football-predictions:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      SPORTMONKS_API_TOKEN: ${SPORTMONKS_API_TOKEN}
+      PORT: 3000
+    restart: unless-stopped
