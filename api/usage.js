@@ -1,5 +1,5 @@
 /**
- * Vercel Serverless Function - Leagues + upcoming fixtures proxy
+ * Vercel Serverless Function - API usage proxy
  */
 import { handleRequestGuards, forwardSportmonks } from './_shared.js';
 
@@ -11,18 +11,13 @@ export default async function handler(req, res) {
   try {
     return await forwardSportmonks({
       res,
-      path: '/leagues',
+      path: '/my/usage',
       query: req.query,
-      defaultParams: {
-        include: 'country;upcoming.participants;upcoming.state;upcoming.metadata',
-        timezone: 'UTC',
-        per_page: '50',
-      },
     });
   } catch (error) {
     return res.status(500).json({
-      error: 'Failed to fetch leagues',
-      code: 'LEAGUES_PROXY_ERROR',
+      error: 'Failed to fetch usage',
+      code: 'USAGE_PROXY_ERROR',
       message: error.message,
     });
   }
