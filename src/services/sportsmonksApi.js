@@ -2,127 +2,106 @@ import axios from 'axios';
 import { getCache, setCache } from '../utils/cacheManager';
 import { logApiRequest } from '../utils/apiMonitor';
 
-/**
- * API Service using proxy endpoints to avoid CORS issues
- *
- * In development: Vite proxy forwards /api/* to SportMonks API
- * In production: Vercel serverless functions handle /api/* requests
- */
-
-/**
- * Creates axios instance for proxy API calls
- */
 const apiClient = axios.create({
   baseURL: '/api',
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  headers: { 'Content-Type': 'application/json' },
 });
 
-/**
- * Fetches all leagues with upcoming fixtures
- * @returns {Promise} API response with leagues data
- */
-export const getLeaguesWithUpcoming = async () => {
-  try {
-    const response = await apiClient.get('/leagues');
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching leagues:', error);
-    throw error;
+const isRateLimitError = (error) => error?.response?.status === 429;
+
+const mapApiError = (error, fallbackMessage) => {
+  if (isRateLimitError(error)) {
+    return {
+      code: 'RATE_LIMIT_EXCEEDED',
+      message: 'Rate limit 429: agotaste las llamadas por entidad. Reintenta en unos minutos.',
+      status: 429,
+    };
   }
+
+  if (error?.response?.status === 403 || error?.response?.status === 402) {
+    return {
+      code: 'ADDON_OR_PLAN_UNAVAILABLE',
+      message: 'El plan actual no incluye este módulo (predictions/value-bets) o no está activo.',
+      status: error.response.status,
+    };
+  }
+
+  return {
+    code: 'API_REQUEST_FAILED',
+    message: fallbackMessage,
+    status: error?.response?.status ?? 500,
+  };
 };
 
-/**
- * Fetches detailed fixture information by ID
- * Uses localStorage caching to reduce API calls (5 minute TTL)
- * @param {string|number} fixtureId - The fixture ID
- * @returns {Promise} API response with fixture details
- */
-export const getFixtureDetails = async (fixtureId) => {
-  try {
-    const cacheKey = `fixture_${fixtureId}`;
-
-    // Check cache first
-    const cachedData = getCache(cacheKey);
-    if (cachedData) {
-      console.log(`Using cached fixture details for ${fixtureId}`);
-      logApiRequest('/fixtures', true); // Log cached request
-      return cachedData;
-    }
-
-    // Cache miss - fetch from API
-    console.log(`Fetching fixture details from API for ${fixtureId}`);
-    logApiRequest('/fixtures', false); // Log live request
-    const response = await apiClient.get('/fixtures', {
-      params: {
-        id: fixtureId,
-      },
-    });
-
-    // Cache the response (5 minute TTL)
-    setCache(cacheKey, response.data, 5 * 60 * 1000);
-
-    return response.data;
-  } catch (error) {
-    console.error(`Error fetching fixture ${fixtureId}:`, error);
-    throw error;
+const fetchWithCache = async ({ cacheKey, endpoint, params = {}, ttl = 60_000, fallbackMessage }) => {
+  const cached = getCache(cacheKey);
+  if (cached) {
+    logApiRequest(endpoint, true);
+    return cached;
   }
-};
 
-/**
- * Fetches bookmaker odds for a specific fixture
- * Uses localStorage caching to reduce API calls (5 minute TTL)
- * @param {string|number} fixtureId - The fixture ID
- * @param {number} bookmakerId - The bookmaker ID (2 for Bet365, 23 for Unibet)
- * @returns {Promise} API response with odds data
- */
-export const getBookmakerOdds = async (fixtureId, bookmakerId = 2) => {
   try {
-    const cacheKey = `odds_${fixtureId}_${bookmakerId}`;
-
-    // Check cache first
-    const cachedData = getCache(cacheKey);
-    if (cachedData) {
-      console.log(`Using cached odds for fixture ${fixtureId}, bookmaker ${bookmakerId}`);
-      logApiRequest(`/odds/${bookmakerId}`, true); // Log cached request
-      return cachedData;
-    }
-
-    // Cache miss - fetch from API
-    console.log(`Fetching odds from API for fixture ${fixtureId}, bookmaker ${bookmakerId}`);
-    logApiRequest(`/odds/${bookmakerId}`, false); // Log live request
-    const response = await apiClient.get('/odds', {
-      params: {
-        fixtureId,
-        bookmakerId,
-      },
-    });
-
-    // Cache the response (5 minute TTL)
-    setCache(cacheKey, response.data, 5 * 60 * 1000);
-
-    return response.data;
-  } catch (error) {
-    console.error(`Error fetching odds for fixture ${fixtureId}:`, error);
-    throw error;
-  }
-};
-
-/**
- * Generic API call helper
- * @param {string} endpoint - API endpoint
- * @param {object} params - Query parameters
- * @returns {Promise} API response
- */
-export const makeApiCall = async (endpoint, params = {}) => {
-  try {
+    logApiRequest(endpoint, false);
     const response = await apiClient.get(endpoint, { params });
+    setCache(cacheKey, response.data, ttl);
     return response.data;
   } catch (error) {
-    console.error(`API Error on ${endpoint}:`, error);
-    throw error;
+    throw mapApiError(error, fallbackMessage);
   }
 };
+
+export const getLeaguesWithUpcoming = async () => fetchWithCache({
+  cacheKey: 'leagues_upcoming',
+  endpoint: '/leagues',
+  ttl: 120_000,
+  fallbackMessage: 'No se pudo cargar el listado de ligas.',
+});
+
+export const getFixtureById = async (fixtureId) => fetchWithCache({
+  cacheKey: `fixture_${fixtureId}`,
+  endpoint: '/fixtures',
+  params: { id: fixtureId },
+  ttl: 180_000,
+  fallbackMessage: `No se pudo cargar el fixture ${fixtureId}.`,
+});
+
+export const getProbabilitiesByFixture = async (fixtureId) => fetchWithCache({
+  cacheKey: `probabilities_${fixtureId}`,
+  endpoint: '/predictions',
+  params: { fixtureId },
+  ttl: 90_000,
+  fallbackMessage: `No se pudieron cargar probabilities para fixture ${fixtureId}.`,
+});
+
+export const getValueBetsByFixture = async (fixtureId) => fetchWithCache({
+  cacheKey: `valuebets_${fixtureId}`,
+  endpoint: '/value-bets',
+  params: { fixtureId },
+  ttl: 90_000,
+  fallbackMessage: `No se pudieron cargar value bets para fixture ${fixtureId}.`,
+});
+
+export const getGlobalValueBets = async (params = {}) => fetchWithCache({
+  cacheKey: `valuebets_global_${JSON.stringify(params)}`,
+  endpoint: '/value-bets',
+  params,
+  ttl: 60_000,
+  fallbackMessage: 'No se pudieron cargar value bets globales.',
+});
+
+export const getOddsByFixture = async (fixtureId, bookmakerId = 2) => fetchWithCache({
+  cacheKey: `odds_${fixtureId}_${bookmakerId}`,
+  endpoint: '/odds',
+  params: { fixtureId, bookmakerId },
+  ttl: 120_000,
+  fallbackMessage: `No se pudieron cargar odds para fixture ${fixtureId}.`,
+});
+
+export const getUsage = async () => fetchWithCache({
+  cacheKey: 'usage_snapshot',
+  endpoint: '/usage',
+  ttl: 60_000,
+  fallbackMessage: 'No se pudo cargar usage.',
+});
 
 export default apiClient;
