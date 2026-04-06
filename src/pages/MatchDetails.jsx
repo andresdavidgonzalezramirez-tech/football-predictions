@@ -15,9 +15,12 @@ import normalizeProbabilities from '../utils/normalizers/normalizeProbabilities'
 import normalizeValueBets from '../utils/normalizers/normalizeValueBets';
 import {
   formatProbabilityValue,
-  translateOddsLabel,
   translateMarketTitle,
 } from '../utils/marketTranslations';
+import {
+  resolveOddsMarketTitle,
+  resolveOddsSelectionLabel,
+} from '../utils/oddsPresentation';
 import './MatchDetails.css';
 
 // --- Funciones de utilidad ---
@@ -228,18 +231,11 @@ const MatchDetails = () => {
               <div className="fp-market-groups">
                 {Object.entries(groupedOdds).map(([marketName, marketOdds]) => (
                   <div key={marketName} className="fp-market-card">
-                    <div className="fp-market-head"><strong>{translateMarketTitle({ marketName })}</strong></div>
+                    <div className="fp-market-head"><strong>{resolveOddsMarketTitle(marketName)}</strong></div>
                     <div className="fp-market-options">
                       {marketOdds.map((odd) => (
                         <button key={odd.id} className="fp-odd-pill">
-                          <span>{translateOddsLabel(
-                            odd.label || odd.original_label,
-                            { marketName: odd.market?.name || odd.market_description },
-                            {
-                              homeTeam: fixture.participants?.home?.name,
-                              awayTeam: fixture.participants?.away?.name,
-                            },
-                          )}</span>
+                          <span>{resolveOddsSelectionLabel(odd)}</span>
                           <strong>{odd.value}</strong>
                         </button>
                       ))}
