@@ -80,16 +80,16 @@ const MARKET_TRANSLATION_RULES = [
     patterns: ['away-over-under', 'away over/under', 'away under', 'visitante más/menos'],
   },
   {
+    key: 'corners',
+    title: 'Tiros de esquina Más / Menos',
+    category: 'Esquinas',
+    patterns: ['corners over/under', 'corners-over-under', 'corners', 'corner', 'esquinas', 'tiros de esquina'],
+  },
+  {
     key: 'over_under',
     title: 'Más / Menos',
     category: 'Más/Menos',
     patterns: ['over-under', 'over/under', 'total', 'más/menos'],
-  },
-  {
-    key: 'corners',
-    title: 'Esquinas',
-    category: 'Esquinas',
-    patterns: ['corners', 'corner', 'esquinas', 'tiros de esquina'],
   },
 ];
 
@@ -108,7 +108,20 @@ const extractGoalLine = (...parts) => {
 
 const detectRule = (...parts) => {
   const text = cleanInput(...parts);
-  return MARKET_TRANSLATION_RULES.find((rule) => rule.patterns.some((pattern) => text.includes(pattern)));
+  let bestMatch = null;
+
+  MARKET_TRANSLATION_RULES.forEach((rule) => {
+    rule.patterns.forEach((pattern) => {
+      if (!text.includes(pattern)) return;
+
+      const candidate = { rule, score: pattern.length };
+      if (!bestMatch || candidate.score > bestMatch.score) {
+        bestMatch = candidate;
+      }
+    });
+  });
+
+  return bestMatch?.rule ?? null;
 };
 
 const sentenceCase = (value) => {
@@ -194,6 +207,7 @@ export const translateMarketOption = (optionKey, marketContext = {}) => {
   if (isOverUnderRule({ key: ruleKey })) {
     if (line && (normalized === 'yes' || normalized === 'over')) return `Más de ${line}`;
     if (line && (normalized === 'no' || normalized === 'under')) return `Menos de ${line}`;
+    if (line && ['equal', 'exactly'].includes(normalized)) return `Exactamente ${line}`;
   }
 
   if (ruleKey === 'double_chance') {
