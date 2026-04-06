@@ -1,263 +1,161 @@
-/* Dark Theme by Default */
 .league-card {
-  background: #1e293b;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-  margin-bottom: 16px;
+  border: 1px solid rgba(96, 123, 172, 0.28);
+  border-radius: 10px;
+  background: #0f1728;
   overflow: hidden;
-  transition: all 0.3s ease;
-  border: 1px solid #334155;
 }
 
-.league-card:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
-  transform: translateY(-2px);
-  border-color: #475569;
-}
-
-/* League Header */
 .league-card-header {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto;
   align-items: center;
-  justify-content: space-between;
-  padding: 20px;
+  padding: 10px 12px;
+  gap: 10px;
   cursor: pointer;
-  user-select: none;
-  transition: background-color 0.2s ease;
+  background: #131d33;
 }
 
-.league-card-header:hover {
-  background-color: #2d3748;
-}
-
-.league-card-header:focus {
-  outline: 2px solid #3b82f6;
-  outline-offset: -2px;
-}
-
-.league-info {
+.league-info-compact {
   display: flex;
   align-items: center;
-  gap: 16px;
-  flex: 1;
+  gap: 10px;
+}
+
+.league-logo-wrap {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  background: #0b1221;
+  border-radius: 6px;
 }
 
 .league-logo {
-  width: 48px;
-  height: 48px;
+  width: 26px;
+  height: 26px;
   object-fit: contain;
-  border-radius: 8px;
-  background: #0f172a;
-  padding: 4px;
-}
-
-.league-details {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
 }
 
 .league-name {
-  font-size: 18px;
-  font-weight: 600;
-  color: #f1f5f9;
   margin: 0;
+  font-size: 1rem;
+  color: #f0f6ff;
 }
 
 .league-country {
-  font-size: 14px;
-  color: #94a3b8;
   margin: 0;
+  color: #9ab0d8;
+  font-size: 0.8rem;
 }
 
-.league-meta {
+.sportsbook-meta {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .fixtures-count {
-  font-size: 14px;
-  font-weight: 500;
-  color: #93c5fd;
-  background: #1e3a8a;
-  padding: 4px 12px;
-  border-radius: 12px;
+  font-size: 0.78rem;
+  padding: 4px 8px;
+  border: 1px solid rgba(102, 164, 255, 0.45);
+  color: #bdd9ff;
+  border-radius: 999px;
 }
 
-.expand-icon {
-  color: #94a3b8;
-  transition: transform 0.3s ease;
+.sportsbook-table {
+  padding: 0;
 }
 
-.expand-icon.expanded {
-  transform: rotate(180deg);
-}
-
-/* Fixtures List */
-.fixtures-list {
-  padding: 0 20px 20px 20px;
-  animation: slideDown 0.3s ease-out;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.fixture-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px;
-  background: #0f172a;
-  border-radius: 8px;
-  margin-bottom: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border: 1px solid #334155;
-}
-
-.fixture-item:hover {
-  background: #1e293b;
-  border-color: #3b82f6;
-  transform: translateX(4px);
-}
-
-.fixture-item:focus {
-  outline: 2px solid #3b82f6;
-  outline-offset: 2px;
-}
-
-.fixture-item:last-child {
-  margin-bottom: 0;
-}
-
-.fixture-teams {
-  display: flex;
-  flex-direction: column;
+.fixture-table-head {
+  display: grid;
+  grid-template-columns: 170px 1fr 1fr 180px;
   gap: 8px;
-  flex: 1;
+  padding: 8px 12px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #7e95c0;
+  background: #0e1628;
 }
 
-.team-row {
+.sportsbook-fixture-row {
+  display: grid;
+  grid-template-columns: 170px 1fr 1fr 180px;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 12px;
+  border-top: 1px solid rgba(95, 124, 177, 0.16);
+  transition: background 0.15s ease;
+}
+
+.sportsbook-fixture-row:hover {
+  background: rgba(54, 111, 203, 0.12);
+}
+
+.fixture-time {
+  color: #b6caef;
+  font-size: 0.8rem;
+}
+
+.fixture-teams.compact {
   display: flex;
   align-items: center;
+  gap: 8px;
+}
+
+.team-block {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.team-block img {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
 }
 
 .team-name {
-  font-size: 15px;
-  font-weight: 500;
-  color: #e2e8f0;
+  color: #e8f1ff;
+  font-size: 0.86rem;
 }
 
-.home-team {
-  font-weight: 600;
+.fixture-vs {
+  color: #95b5eb;
 }
 
-.fixture-meta {
+.fixture-market-preview {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
+  flex-wrap: wrap;
   gap: 6px;
-  text-align: right;
 }
 
-.fixture-date {
-  font-size: 13px;
-  color: #94a3b8;
-  font-weight: 500;
-  white-space: nowrap;
+.fixture-market-pill {
+  border: 1px solid rgba(73, 162, 255, 0.48);
+  border-radius: 6px;
+  padding: 5px 7px;
+  color: #e5f1ff;
+  background: #163763;
+  font-size: 0.78rem;
 }
 
-.status-badge {
-  font-size: 11px;
-  font-weight: 700;
-  padding: 4px 10px;
-  border-radius: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  white-space: nowrap;
+.fixture-extra {
+  color: #9fb4db;
+  font-size: 0.78rem;
 }
 
-.status-badge.live {
-  color: white;
-  background: #dc2626;
-  animation: pulse 2s infinite;
+.fixture-badges {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
-}
-
-.odds-badge {
-  font-size: 11px;
-  font-weight: 600;
-  color: #86efac;
-  background: #14532d;
-  padding: 2px 8px;
-  border-radius: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-/* Empty State */
-.no-fixtures {
-  padding: 40px 20px;
-  text-align: center;
-}
-
-.no-fixtures p {
-  color: #94a3b8;
-  font-size: 14px;
-  margin: 0;
-}
-
-/* Responsive */
-@media (max-width: 640px) {
-  .league-card-header {
-    padding: 16px;
+@media (max-width: 980px) {
+  .fixture-table-head,
+  .sportsbook-fixture-row {
+    grid-template-columns: 1fr;
   }
-
-  .league-logo {
-    width: 40px;
-    height: 40px;
-  }
-
-  .league-name {
-    font-size: 16px;
-  }
-
-  .league-country {
-    font-size: 13px;
-  }
-
-  .fixtures-list {
-    padding: 0 16px 16px 16px;
-  }
-
-  .fixture-item {
-    padding: 12px;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-
-  .fixture-meta {
-    width: 100%;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .team-name {
-    font-size: 14px;
+  .fixture-badges {
+    justify-content: flex-start;
   }
 }

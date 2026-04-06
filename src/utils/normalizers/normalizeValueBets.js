@@ -1,7 +1,8 @@
 import { calculateEdgePercent } from '../oddsCalculator';
 
 export const normalizeValueBets = (response) => {
-  const items = response?.data ?? [];
+  const raw = response?.data ?? response ?? [];
+  const items = Array.isArray(raw) ? raw : raw?.data ?? [];
 
   return items.map((item) => {
     const predictions = item.predictions ?? {};

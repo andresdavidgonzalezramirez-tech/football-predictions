@@ -28,7 +28,9 @@ const MarketOverview = () => {
           getGlobalValueBets({ per_page: 50 }),
         ]);
 
-        const rawFixtures = (leaguesResponse?.data ?? []).flatMap((league) => league.upcoming ?? []);
+        const rawFixtures = (leaguesResponse?.data ?? []).flatMap(
+          (league) => league?.upcoming?.data ?? league?.upcoming ?? [],
+        );
         const normalizedFixtures = rawFixtures.map(normalizeFixture).filter(Boolean);
         const valueBets = normalizeValueBets(valueBetsResponse);
 

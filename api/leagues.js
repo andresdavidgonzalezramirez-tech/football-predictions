@@ -1,7 +1,7 @@
 /**
  * Vercel Serverless Function - Leagues + upcoming fixtures proxy
  */
-import { handleRequestGuards, forwardSportmonks } from './_shared.js';
+import { handleRequestGuards, forwardSportmonks, sendApiError } from './_shared.js';
 
 export default async function handler(req, res) {
   if (!handleRequestGuards(req, res)) {
@@ -20,10 +20,11 @@ export default async function handler(req, res) {
       },
     });
   } catch (error) {
-    return res.status(500).json({
-      error: 'Failed to fetch leagues',
+    return sendApiError(res, {
+      status: 500,
       code: 'LEAGUES_PROXY_ERROR',
-      message: error.message,
+      message: 'Failed to fetch leagues',
+      context: { detail: error.message },
     });
   }
 }
