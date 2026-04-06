@@ -24,6 +24,7 @@ const replaceCoreToken = (value, { homeTeam, awayTeam } = {}) => {
   if (!raw) return '';
 
   const lower = raw.toLowerCase();
+  // Convierte identificadores técnicos o ingleses a nombres reales o español
   if (lower === 'home' || raw === '1') return homeTeam || 'Local';
   if (lower === 'away' || raw === '2') return awayTeam || 'Visitante';
   if (lower === 'x') return 'Empate';
@@ -35,6 +36,7 @@ const translateByDelimiters = (value, teams = {}) => {
   const source = normalizeString(value);
   if (!source) return '';
 
+  // Divide por separadores comunes en apuestas para traducir cada parte individualmente
   return source
     .split(/(\s*\/\s*|\s*-\s*|\s+or\s+|\s+y\s+)/i)
     .map((piece) => {
@@ -57,20 +59,22 @@ const enrichWithContext = (base, odd = {}, teams = {}) => {
 
   if (!normalizedBase && original) return original;
 
+  // Si es un mercado de Over/Under y el total no está en el label, lo añade (ej: "Más" -> "Más 2.5")
   if (
-    total
-    && normalizedBase
-    && !normalizedBase.includes(total)
-    && /(^|[\s/])(Más|Menos|Over|Under|Sí|No|Yes|No)([\s/]|$)/i.test(normalizedBase)
+    total &&
+    normalizedBase &&
+    !normalizedBase.includes(total) &&
+    /(^|[\s/])(Más|Menos|Over|Under|Sí|No|Yes|No)([\s/]|$)/i.test(normalizedBase)
   ) {
     return `${normalizedBase} ${total}`.trim();
   }
 
+  // Si es un mercado con hándicap, lo añade entre paréntesis
   if (
-    translatedHandicap
-    && normalizedBase
-    && !normalizedBase.includes(translatedHandicap)
-    && ['1', '2', 'Home', 'Away', 'Draw', 'Tie'].includes(normalizeString(odd.label))
+    translatedHandicap &&
+    normalizedBase &&
+    !normalizedBase.includes(translatedHandicap) &&
+    ['1', '2', 'Home', 'Away', 'Draw', 'Tie'].includes(normalizeString(odd.label))
   ) {
     return `${normalizedBase} (${translatedHandicap})`;
   }
@@ -78,6 +82,10 @@ const enrichWithContext = (base, odd = {}, teams = {}) => {
   return normalizedBase || original;
 };
 
+/**
+ * Resuelve la etiqueta legible para una selección de cuota (Odd).
+ * Prioriza la traducción y la inyección de nombres de equipos.
+ */
 export const resolveOddsSelectionLabel = (odd = {}, teams = {}) => {
   const label = normalizeString(odd.label);
   const name = normalizeString(odd.name);
@@ -89,7 +97,9 @@ export const resolveOddsSelectionLabel = (odd = {}, teams = {}) => {
 
   if (withContext) return withContext;
 
+  // Fallbacks seguros
   if (name) return translateByDelimiters(name, teams);
   if (original) return translateByDelimiters(original, teams);
+  
   return 'Selección';
 };
