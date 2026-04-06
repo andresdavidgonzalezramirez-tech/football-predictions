@@ -10,6 +10,7 @@ const BASE_OPTION_LABELS = {
   local: 'Local',
   visitante: 'Visitante',
   empate: 'Empate',
+  empatizar: 'Empate',
   none: 'Nadie / Sin gol',
 };
 
@@ -149,7 +150,8 @@ const tokenizeOption = (rawOption) => String(rawOption ?? '')
   .split(/[_-]+/)
   .filter(Boolean);
 
-const translateToken = (token) => (/^emp(a|á)t/.test(token) ? 'Empate' : (BASE_OPTION_LABELS[token] ?? sentenceCase(token)));
+const translateToken = (token) => 
+  (/^emp(a|á)t/.test(token) ? 'Empate' : (BASE_OPTION_LABELS[token] ?? sentenceCase(token)));
 
 const buildDelimitedLabel = (tokens, separator = ' / ') => tokens
   .map(translateToken)
