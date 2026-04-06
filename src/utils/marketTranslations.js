@@ -228,19 +228,6 @@ export const translateMarketOption = (optionKey, marketContext = {}) => {
   return humanizeFallback(raw);
 };
 
-export const translateOddsLabel = (label, marketContext = {}, { homeTeam, awayTeam } = {}) => {
-  const source = String(label ?? '').trim();
-  if (!source) return 'Opción';
-
-  const replacedTeams = source
-    .replace(/\b1\b/g, homeTeam || 'Local')
-    .replace(/\b2\b/g, awayTeam || 'Visitante')
-    .replace(/\bhome\b/gi, homeTeam || 'Local')
-    .replace(/\baway\b/gi, awayTeam || 'Visitante');
-
-  return translateMarketOption(replacedTeams, marketContext);
-};
-
 export const formatProbabilityValue = (value) => {
   const number = Number(value);
   if (!Number.isFinite(number)) return String(value ?? '—');
