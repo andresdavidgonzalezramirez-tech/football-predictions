@@ -1,4 +1,4 @@
-const OPTION_BASE_LABELS = {
+const BASE_OPTION_LABELS = {
   home: 'Local',
   away: 'Visitante',
   draw: 'Empate',
@@ -7,111 +7,230 @@ const OPTION_BASE_LABELS = {
   no: 'No',
   over: 'Más',
   under: 'Menos',
+  local: 'Local',
+  visitante: 'Visitante',
+  empatizar: 'Empate',
+  empate: 'Empate',
+  sin: 'Sin',
+  gol: 'gol',
 };
 
-const MARKET_TITLE_RULES = [
-  { patterns: ['both-teams-to-score', 'both teams to score', 'btts'], label: 'Ambos equipos anotan' },
-  { patterns: ['team_to_score_first', 'team to score first', 'first team to score'], label: 'Primer equipo en anotar' },
-  { patterns: ['double-chance', 'double chance'], label: 'Doble oportunidad' },
-  { patterns: ['correct-score', 'correct score'], label: 'Marcador exacto' },
-  { patterns: ['half-time-full-time', 'half time/full time', 'half-time/full-time'], label: 'Medio tiempo / Final' },
-  { patterns: ['first-half-winner', 'first half winner'], label: 'Ganador de la primera mitad' },
-  { patterns: ['fulltime-result', 'fulltime result', 'result'], label: 'Resultado final' },
-  { patterns: ['corners', 'corner'], label: 'Córners' },
-  { patterns: ['home-over-under', 'home over/under'], label: 'Local Más / Menos' },
-  { patterns: ['away-over-under', 'away over/under'], label: 'Visitante Más / Menos' },
-  { patterns: ['over-under', 'over/under', 'total'], label: 'Más / Menos' },
+const TECH_WORDS = new Set([
+  'probability', 'probabilities', 'probabilidad', 'probabilidades', 'prediction', 'predictions',
+  'market', 'markets', 'type', 'code', 'developer', 'name', 'developername',
+]);
+
+const MARKET_TRANSLATION_RULES = [
+  {
+    key: 'both_teams_to_score',
+    title: 'Ambos equipos anotan',
+    patterns: ['both-teams-to-score', 'both teams to score', 'btts', 'marcar-ambos-equipos'],
+  },
+  {
+    key: 'team_to_score_first',
+    title: 'Primer equipo en anotar',
+    patterns: ['team_to_score_first', 'team to score first', 'first team to score', 'primer-equipo-en-anotar'],
+  },
+  {
+    key: 'team_to_score_last',
+    title: 'Último equipo en anotar',
+    patterns: ['team_to_score_last', 'team to score last', 'last team to score', 'último-equipo-en-anotar'],
+  },
+  {
+    key: 'double_chance',
+    title: 'Doble oportunidad',
+    patterns: ['double-chance', 'double chance', 'doble oportunidad', 'double_oportunidad'],
+  },
+  {
+    key: 'correct_score',
+    title: 'Marcador exacto',
+    patterns: ['correct-score', 'correct score', 'puntuación-correcta', 'marcador exacto'],
+  },
+  {
+    key: 'half_time_full_time',
+    title: 'Medio tiempo / Final',
+    patterns: ['half-time-full-time', 'half time/full time', 'half-time/full-time', 'descanso-tiempo-completo'],
+  },
+  {
+    key: 'home_over_under',
+    title: 'Local Más / Menos',
+    patterns: ['home-over-under', 'home over/under', 'home under', 'local más/menos'],
+  },
+  {
+    key: 'away_over_under',
+    title: 'Visitante Más / Menos',
+    patterns: ['away-over-under', 'away over/under', 'away under', 'visitante más/menos'],
+  },
+  {
+    key: 'over_under',
+    title: 'Más / Menos',
+    patterns: ['over-under', 'over/under', 'total', 'más/menos'],
+  },
+  {
+    key: 'corners',
+    title: 'Córners',
+    patterns: ['corners', 'corner', 'esquinas'],
+  },
+  {
+    key: 'first_half_result',
+    title: 'Resultado al descanso',
+    patterns: ['first-half-winner', 'first half winner', '1st half result'],
+  },
+  {
+    key: 'result',
+    title: 'Resultado final',
+    patterns: ['fulltime-result', 'fulltime result', 'match result', 'resultado final'],
+  },
 ];
 
-const toSearchText = (...parts) => parts
+const CATEGORY_LABELS = {
+  corners: 'Córners',
+  first_half_result: 'Inicio Más/Menos',
+  home_over_under: 'Local Más/Menos',
+  away_over_under: 'Visitante Más/Menos',
+  over_under: 'Más/Menos',
+  result: 'Resultado',
+  half_time_full_time: 'Resultado',
+  double_chance: 'Resultado',
+  both_teams_to_score: 'Otros mercados',
+  team_to_score_first: 'Otros mercados',
+  team_to_score_last: 'Otros mercados',
+  correct_score: 'Otros mercados',
+};
+
+const cleanInput = (...parts) => parts
   .filter(Boolean)
   .join(' ')
-  .toLowerCase();
+  .toLowerCase()
+  .replace(/\s+/g, ' ')
+  .trim();
 
 const extractGoalLine = (...parts) => {
-  const text = toSearchText(...parts).replace(/_/g, '.');
+  const text = cleanInput(...parts).replace(/_/g, '.');
   const match = text.match(/(\d+(?:\.\d+)?)/);
   return match ? match[1] : null;
 };
 
-const isOverUnderMarket = (...parts) => {
-  const text = toSearchText(...parts);
-  return text.includes('over-under') || text.includes('over/under');
+const detectRule = (...parts) => {
+  const text = cleanInput(...parts);
+  return MARKET_TRANSLATION_RULES.find((rule) => rule.patterns.some((pattern) => text.includes(pattern)));
 };
 
-const toReadableFallback = (value = '') => {
-  const cleaned = String(value)
-    .replace(/probability|probabilities|prediction|market|developer_name|type/gi, '')
+const sentenceCase = (value) => {
+  if (!value) return value;
+  return value.charAt(0).toUpperCase() + value.slice(1);
+};
+
+const humanizeFallback = (...parts) => {
+  const tokens = cleanInput(...parts)
     .replace(/[_-]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-
-  if (!cleaned) return 'Mercado';
-
-  return cleaned
     .split(' ')
-    .map((word) => OPTION_BASE_LABELS[word.toLowerCase()] || (word[0]?.toUpperCase() + word.slice(1).toLowerCase()))
-    .join(' ');
+    .filter(Boolean)
+    .filter((token) => !TECH_WORDS.has(token));
+
+  if (!tokens.length) return 'Mercado';
+
+  return sentenceCase(tokens.map((token) => BASE_OPTION_LABELS[token] ?? token).join(' '));
 };
+
+const tokenizeOption = (rawOption) => String(rawOption ?? '')
+  .toLowerCase()
+  .replace(/[()]/g, ' ')
+  .replace(/\s*\/\s*/g, '_')
+  .split(/[_\-\s]+/)
+  .filter(Boolean);
+
+const translateToken = (token) => BASE_OPTION_LABELS[token] ?? sentenceCase(token);
+
+const buildDelimitedLabel = (tokens, separator = ' / ') => tokens
+  .map(translateToken)
+  .join(separator)
+  .replace(/\s+/g, ' ')
+  .trim();
+
+const isOverUnderRule = (rule) => ['over_under', 'home_over_under', 'away_over_under'].includes(rule?.key);
 
 export const translateMarketTitle = ({ marketName, marketCode, developerName } = {}) => {
-  const searchText = toSearchText(marketName, marketCode, developerName);
+  const rule = detectRule(marketName, marketCode, developerName);
   const line = extractGoalLine(marketName, marketCode, developerName);
 
-  const rule = MARKET_TITLE_RULES.find(({ patterns }) => patterns.some((pattern) => searchText.includes(pattern)));
   if (rule) {
-    if (rule.label.includes('Más / Menos') && line) {
-      return `${rule.label} ${line}`;
+    if (isOverUnderRule(rule) && line) {
+      return `${rule.title} ${line}`;
     }
-    return rule.label;
+    return rule.title;
   }
 
-  return toReadableFallback(marketName || marketCode || developerName || 'Mercado');
+  return humanizeFallback(marketName, marketCode, developerName);
 };
 
-export const translateOptionKey = (optionKey, marketContext = {}) => {
+export const classifyMarketCategory = ({ marketName, marketCode, developerName } = {}) => {
+  const rule = detectRule(marketName, marketCode, developerName);
+  if (!rule) return 'Otros mercados';
+  return CATEGORY_LABELS[rule.key] ?? 'Otros mercados';
+};
+
+export const translateMarketOption = (optionKey, marketContext = {}) => {
   const raw = String(optionKey ?? '').trim();
   if (!raw) return 'Opción';
 
-  const normalized = raw.toLowerCase().replace(/\s+/g, '_');
   const { marketName, marketCode, developerName } = marketContext;
+  const rule = detectRule(marketName, marketCode, developerName);
+  const normalized = raw.toLowerCase().replace(/\s+/g, '_');
+  const tokens = tokenizeOption(normalized);
 
-  if ((normalized === 'yes' || normalized === 'no') && isOverUnderMarket(marketName, marketCode, developerName)) {
+  if (isOverUnderRule(rule)) {
     const line = extractGoalLine(marketName, marketCode, developerName);
-    if (line) return normalized === 'yes' ? `Más de ${line}` : `Menos de ${line}`;
+    if (line && (normalized === 'yes' || normalized === 'over')) return `Más de ${line}`;
+    if (line && (normalized === 'no' || normalized === 'under')) return `Menos de ${line}`;
   }
 
-  if (OPTION_BASE_LABELS[normalized]) return OPTION_BASE_LABELS[normalized];
+  if (rule?.key === 'double_chance') {
+    const normalizedPair = tokens.slice(0, 2);
+    if (normalizedPair.length === 2) return buildDelimitedLabel(normalizedPair, ' o ');
+  }
 
-  return normalized
-    .split('_')
-    .map((token) => OPTION_BASE_LABELS[token] || token)
-    .join(' ')
-    .replace(/\b\w/g, (char) => char.toUpperCase());
+  if (rule?.key === 'half_time_full_time' && tokens.length >= 2) {
+    return buildDelimitedLabel(tokens.slice(0, 2), ' / ');
+  }
+
+  if ((rule?.key === 'team_to_score_first' || rule?.key === 'team_to_score_last') && normalized === 'draw') {
+    return 'Nadie / Sin gol';
+  }
+
+  if (tokens.length >= 2 && tokens.every((token) => ['home', 'away', 'draw'].includes(token))) {
+    return buildDelimitedLabel(tokens.slice(0, 2), ' / ');
+  }
+
+  if (tokens.length === 2 && ['yes', 'no'].includes(tokens[1])) {
+    return `${translateToken(tokens[0])}/${translateToken(tokens[1])}`;
+  }
+
+  if (tokens.length) return buildDelimitedLabel(tokens, ' ');
+
+  return humanizeFallback(raw);
 };
 
-export const translateOddsLabel = (label, { homeTeam, awayTeam } = {}) => {
+export const translateOddsLabel = (label, marketContext = {}, { homeTeam, awayTeam } = {}) => {
   const source = String(label ?? '').trim();
   if (!source) return 'Opción';
 
-  let translated = source
+  const replacedTeams = source
+    .replace(/\b1\b/g, homeTeam || 'Local')
+    .replace(/\b2\b/g, awayTeam || 'Visitante')
     .replace(/\bhome\b/gi, homeTeam || 'Local')
-    .replace(/\baway\b/gi, awayTeam || 'Visitante')
-    .replace(/\bhogar\b/gi, homeTeam || 'Local')
-    .replace(/\blejos\b/gi, awayTeam || 'Visitante')
-    .replace(/\bdraw\b/gi, 'Empate')
-    .replace(/\bdibujar\b/gi, 'Empate')
-    .replace(/\bequal\b/gi, 'Igual');
+    .replace(/\baway\b/gi, awayTeam || 'Visitante');
 
-  translated = translated
-    .replace(/\s+/g, ' ')
-    .trim();
-
-  return translated;
+  return translateMarketOption(replacedTeams, marketContext)
+    .replace(/\bEmpate\/No\b/gi, 'Empate/No')
+    .replace(/\bEmpate\/Sí\b/gi, 'Empate/Sí');
 };
 
 export const formatProbabilityValue = (value) => {
   const number = Number(value);
   if (!Number.isFinite(number)) return String(value ?? '—');
-  return `${number.toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}%`;
+  return `${number.toLocaleString('es-ES', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  })}%`;
 };

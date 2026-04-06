@@ -4,7 +4,7 @@ import Badge from './Badge';
 import { getProbabilitiesByFixture } from '../services/sportsmonksApi';
 import normalizeProbabilities from '../utils/normalizers/normalizeProbabilities';
 import normalizeFixture from '../utils/normalizers/normalizeFixture';
-import { formatProbabilityValue, translateOptionKey } from '../utils/marketTranslations';
+import { formatProbabilityValue, translateMarketOption } from '../utils/marketTranslations';
 import './LeagueCard.css';
 
 const LeagueCard = ({ league }) => {
@@ -67,7 +67,7 @@ const LeagueCard = ({ league }) => {
 
     return market.options.slice(0, 3).map((option) => (
       <span key={`${fixtureId}-${option.key}`} className="fixture-market-pill">
-        {translateOptionKey(option.key, market)}: {formatProbabilityValue(option.value)}
+        {translateMarketOption(option.key, market)}: {formatProbabilityValue(option.value)}
       </span>
     ));
   };
