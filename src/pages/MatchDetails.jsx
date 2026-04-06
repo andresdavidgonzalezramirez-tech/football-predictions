@@ -17,41 +17,14 @@ import {
   formatProbabilityValue,
   translateMarketTitle,
   translateOddsLabel,
-  translateOptionKey,
+  translateMarketOption,
+  classifyMarketCategory,
 } from '../utils/marketTranslations';
 import './MatchDetails.css';
 
 // --- Funciones de utilidad ---
 const toModuleState = (status, data = null, message = '') => ({ status, data, message });
 const moduleStatusToBadge = (status) => (status === 'success' ? 'available' : status);
-const TEAM_INFO_FALLBACK = 'Dato no disponible';
-
-const OPTION_LABELS = {
-  yes: 'Sí',
-  no: 'No',
-  equal: 'Igual',
-  home: 'Local',
-  away: 'Visitante',
-  draw: 'Empate',
-  over: 'Más',
-  under: 'Menos',
-  home_yes: 'Local Sí',
-  away_yes: 'Visitante Sí',
-};
-
-const humanizeOption = (key) => OPTION_LABELS[key] || key.replaceAll('_', ' ');
-
-const classifyMarketGroup = (code = '', name = '') => {
-  const v = `${code} ${name}`.toLowerCase();
-  if (v.includes('first-half') || v.includes('1st-half') || v.includes('opening')) return 'Inicio Más/Menos';
-  if (v.includes('corner')) return 'Córners';
-  if (v.includes('home-over-under') || v.includes('home_under') || v.includes('home over')) return 'Local Más/Menos';
-  if (v.includes('away-over-under') || v.includes('away_under') || v.includes('away over')) return 'Visitante Más/Menos';
-  if (v.includes('over-under') || v.includes('total')) return 'Más/Menos';
-  if (v.includes('draw') || v.includes('result') || v.includes('double-chance')) return 'Resultado';
-  return 'Otros mercados';
-};
-
 const getErrorState = (error) => {
   if (error.kind === 'plan_restricted') return toModuleState('restricted', null, 'No incluido en tu plan');
   if (error.kind === 'not_found') return toModuleState('empty', null, 'No hay datos');
@@ -132,7 +105,7 @@ const MatchDetails = () => {
   const groupedMarkets = useMemo(() => {
     const groups = {};
     (probabilities.data ?? []).forEach((market) => {
-      const group = classifyMarketGroup(market.marketCode, market.marketName);
+      const group = classifyMarketCategory(market);
       groups[group] = groups[group] ?? [];
       groups[group].push(market);
     });
@@ -236,12 +209,11 @@ const MatchDetails = () => {
                     <div key={item.id} className="fp-market-card">
                       <div className="fp-market-head">
                         <strong>{translateMarketTitle(item)}</strong>
-                        <span>{item.marketCode}</span>
                       </div>
                       <div className="fp-market-options">
                         {item.options.map((opt) => (
                           <button key={opt.key} className="fp-odd-pill">
-                            <span>{translateOptionKey(opt.key, item)}</span>
+                            <span>{translateMarketOption(opt.key, item)}</span>
                             <strong>{formatProbabilityValue(opt.value)}</strong>
                           </button>
                         ))}
@@ -262,10 +234,14 @@ const MatchDetails = () => {
                     <div className="fp-market-options">
                       {marketOdds.slice(0, 9).map((odd) => (
                         <button key={odd.id} className="fp-odd-pill">
-                          <span>{translateOddsLabel(odd.label || odd.original_label, {
-                            homeTeam: fixture.participants?.home?.name,
-                            awayTeam: fixture.participants?.away?.name,
-                          })}</span>
+                          <span>{translateOddsLabel(
+                            odd.label || odd.original_label,
+                            { marketName: odd.market?.name || odd.market_description },
+                            {
+                              homeTeam: fixture.participants?.home?.name,
+                              awayTeam: fixture.participants?.away?.name,
+                            },
+                          )}</span>
                           <strong>{odd.value}</strong>
                         </button>
                       ))}
