@@ -115,3 +115,96 @@ export const forwardSportmonks = async ({
 
   return res.status(response.status).json(data);
 };
+
+export const fetchSportmonksPage = async ({
+  path,
+  query = {},
+  defaultParams = {},
+  baseUrl = SPORTMONKS_BASE,
+}) => {
+  const token = getApiToken();
+  const params = new URLSearchParams({
+    ...defaultParams,
+    ...query,
+    api_token: token,
+  });
+
+  const url = `${baseUrl}${path}?${params.toString()}`;
+  const response = await fetch(url);
+  let data = null;
+  try {
+    data = await response.json();
+  } catch {
+    data = null;
+  }
+
+  return { response, data };
+};
+
+export const forwardSportmonksPaginated = async ({
+  res,
+  path,
+  query = {},
+  defaultParams = {},
+  baseUrl = SPORTMONKS_BASE,
+}) => {
+  const requestedPerPage = Number(query.per_page ?? defaultParams.per_page ?? 50);
+  const per_page = Number.isFinite(requestedPerPage)
+    ? Math.min(Math.max(requestedPerPage, 1), 50)
+    : 50;
+
+  const firstQuery = { ...query, page: Number(query.page ?? 1), per_page };
+  const allData = [];
+  let pagination = null;
+
+  for (let currentPage = firstQuery.page; currentPage < firstQuery.page + 100; currentPage += 1) {
+    const { response, data } = await fetchSportmonksPage({
+      path,
+      query: { ...query, page: currentPage, per_page },
+      defaultParams,
+      baseUrl,
+    });
+
+    if (response.status === 429) {
+      return sendApiError(res, {
+        status: 429,
+        code: 'RATE_LIMIT_EXCEEDED',
+        message: 'Rate limit reached for this entity. Retry with backoff.',
+        context: { upstreamStatus: 429, path, query: { ...query, page: currentPage, per_page } },
+      });
+    }
+
+    if (!response.ok) {
+      const fallbackCode = PLAN_RESTRICTED_STATUSES.has(response.status)
+        ? 'PLAN_RESTRICTED'
+        : 'SPORTMONKS_REQUEST_FAILED';
+      const fallbackMessage = PLAN_RESTRICTED_STATUSES.has(response.status)
+        ? 'The current Sportmonks plan does not include this module or addon.'
+        : 'Sportmonks request failed.';
+
+      return sendApiError(res, {
+        status: response.status,
+        code: data?.code || fallbackCode,
+        message: data?.message || fallbackMessage,
+        context: {
+          upstreamStatus: response.status,
+          path,
+          query: { ...query, page: currentPage, per_page },
+          upstreamError: data,
+        },
+      });
+    }
+
+    const pageData = Array.isArray(data?.data) ? data.data : [];
+    allData.push(...pageData);
+    pagination = data?.pagination ?? pagination;
+
+    const hasMore = Boolean(data?.pagination?.has_more);
+    if (!hasMore) break;
+  }
+
+  return res.status(200).json({
+    ...(pagination ? { pagination: { ...pagination, per_page, page: firstQuery.page, has_more: false } } : {}),
+    data: allData,
+  });
+};

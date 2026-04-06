@@ -9,10 +9,8 @@ const BASE_OPTION_LABELS = {
   under: 'Menos',
   local: 'Local',
   visitante: 'Visitante',
-  empatizar: 'Empate',
   empate: 'Empate',
-  sin: 'Sin',
-  gol: 'gol',
+  none: 'Nadie / Sin gol',
 };
 
 const TECH_WORDS = new Set([
@@ -22,81 +20,78 @@ const TECH_WORDS = new Set([
 
 const MARKET_TRANSLATION_RULES = [
   {
+    key: 'fulltime_result',
+    title: 'Probabilidad de resultado a tiempo completo',
+    category: 'Resultado',
+    patterns: ['fulltime-result', 'fulltime result', 'match result', 'resultado final'],
+  },
+  {
+    key: 'correct_score',
+    title: 'Probabilidad de marcador exacto',
+    category: 'Marcador exacto',
+    patterns: ['correct-score', 'correct score', 'puntuación-correcta', 'marcador exacto'],
+  },
+  {
     key: 'both_teams_to_score',
-    title: 'Ambos equipos anotan',
+    title: 'Probabilidad de que ambos equipos anoten',
+    category: 'Ambos anotan',
     patterns: ['both-teams-to-score', 'both teams to score', 'btts', 'marcar-ambos-equipos'],
   },
   {
     key: 'team_to_score_first',
-    title: 'Primer equipo en anotar',
+    title: 'Probabilidad del equipo en anotar primero',
+    category: 'Primer gol',
     patterns: ['team_to_score_first', 'team to score first', 'first team to score', 'primer-equipo-en-anotar'],
   },
   {
     key: 'team_to_score_last',
-    title: 'Último equipo en anotar',
+    title: 'Probabilidad del equipo en anotar último',
+    category: 'Último gol',
     patterns: ['team_to_score_last', 'team to score last', 'last team to score', 'último-equipo-en-anotar'],
   },
   {
+    key: 'first_half_result',
+    title: 'Probabilidad de ganar la primera mitad',
+    category: 'Primera mitad',
+    patterns: ['first-half-winner', 'first half winner', '1st half result', 'fulltime-result-1st-half'],
+  },
+  {
     key: 'double_chance',
-    title: 'Doble oportunidad',
+    title: 'Probabilidad de doble oportunidad',
+    category: 'Resultado',
     patterns: ['double-chance', 'double chance', 'doble oportunidad', 'double_oportunidad'],
   },
   {
-    key: 'correct_score',
-    title: 'Marcador exacto',
-    patterns: ['correct-score', 'correct score', 'puntuación-correcta', 'marcador exacto'],
-  },
-  {
     key: 'half_time_full_time',
-    title: 'Medio tiempo / Final',
-    patterns: ['half-time-full-time', 'half time/full time', 'half-time/full-time', 'descanso-tiempo-completo'],
+    title: 'Probabilidad de medio tiempo / final',
+    category: 'Resultado',
+    patterns: ['half-time-full-time', 'half time/full time', 'half-time/full-time', 'ht-ft'],
   },
   {
     key: 'home_over_under',
-    title: 'Local Más / Menos',
-    patterns: ['home-over-under', 'home over/under', 'home under', 'local más/menos'],
+    title: 'Inicio Más / Menos',
+    category: 'Inicio Más/Menos',
+    patterns: ['home-over-under', 'home over/under', 'home under', 'inicio más/menos'],
   },
   {
     key: 'away_over_under',
     title: 'Visitante Más / Menos',
+    category: 'Visitante Más/Menos',
     patterns: ['away-over-under', 'away over/under', 'away under', 'visitante más/menos'],
   },
   {
     key: 'over_under',
     title: 'Más / Menos',
+    category: 'Más/Menos',
     patterns: ['over-under', 'over/under', 'total', 'más/menos'],
   },
   {
     key: 'corners',
     title: 'Córners',
+    category: 'Córners',
     patterns: ['corners', 'corner', 'esquinas'],
   },
-  {
-    key: 'first_half_result',
-    title: 'Resultado al descanso',
-    patterns: ['first-half-winner', 'first half winner', '1st half result'],
-  },
-  {
-    key: 'result',
-    title: 'Resultado final',
-    patterns: ['fulltime-result', 'fulltime result', 'match result', 'resultado final'],
-  },
 ];
-
-const CATEGORY_LABELS = {
-  corners: 'Córners',
-  first_half_result: 'Inicio Más/Menos',
-  home_over_under: 'Local Más/Menos',
-  away_over_under: 'Visitante Más/Menos',
-  over_under: 'Más/Menos',
-  result: 'Resultado',
-  half_time_full_time: 'Resultado',
-  double_chance: 'Resultado',
-  both_teams_to_score: 'Otros mercados',
-  team_to_score_first: 'Otros mercados',
-  team_to_score_last: 'Otros mercados',
-  correct_score: 'Otros mercados',
-};
 
 const cleanInput = (...parts) => parts
   .filter(Boolean)
@@ -137,7 +132,8 @@ const tokenizeOption = (rawOption) => String(rawOption ?? '')
   .toLowerCase()
   .replace(/[()]/g, ' ')
   .replace(/\s*\/\s*/g, '_')
-  .split(/[_\-\s]+/)
+  .replace(/\s+/g, '_')
+  .split(/[_-]+/)
   .filter(Boolean);
 
 const translateToken = (token) => BASE_OPTION_LABELS[token] ?? sentenceCase(token);
@@ -150,60 +146,67 @@ const buildDelimitedLabel = (tokens, separator = ' / ') => tokens
 
 const isOverUnderRule = (rule) => ['over_under', 'home_over_under', 'away_over_under'].includes(rule?.key);
 
-export const translateMarketTitle = ({ marketName, marketCode, developerName } = {}) => {
+const normalizeOptionRaw = (value) => String(value ?? '').trim().toLowerCase();
+
+const isScoreToken = (value) => /^\d+[-:]\d+$/.test(String(value));
+
+export const resolveMarketPresentation = ({ marketName, marketCode, developerName } = {}) => {
   const rule = detectRule(marketName, marketCode, developerName);
   const line = extractGoalLine(marketName, marketCode, developerName);
 
-  if (rule) {
-    if (isOverUnderRule(rule) && line) {
-      return `${rule.title} ${line}`;
-    }
-    return rule.title;
+  if (!rule) {
+    return {
+      ruleKey: null,
+      title: humanizeFallback(marketName, marketCode, developerName),
+      category: 'Otros mercados',
+      line,
+    };
   }
 
-  return humanizeFallback(marketName, marketCode, developerName);
+  const title = isOverUnderRule(rule) && line ? `${rule.title} ${line}` : rule.title;
+
+  return {
+    ruleKey: rule.key,
+    title,
+    category: rule.category,
+    line,
+  };
 };
 
-export const classifyMarketCategory = ({ marketName, marketCode, developerName } = {}) => {
-  const rule = detectRule(marketName, marketCode, developerName);
-  if (!rule) return 'Otros mercados';
-  return CATEGORY_LABELS[rule.key] ?? 'Otros mercados';
-};
+export const translateMarketTitle = (marketContext = {}) => resolveMarketPresentation(marketContext).title;
+
+export const classifyMarketCategory = (marketContext = {}) => resolveMarketPresentation(marketContext).category;
 
 export const translateMarketOption = (optionKey, marketContext = {}) => {
   const raw = String(optionKey ?? '').trim();
   if (!raw) return 'Opción';
 
-  const { marketName, marketCode, developerName } = marketContext;
-  const rule = detectRule(marketName, marketCode, developerName);
-  const normalized = raw.toLowerCase().replace(/\s+/g, '_');
-  const tokens = tokenizeOption(normalized);
+  if (isScoreToken(raw)) return raw.replace(':', '-');
 
-  if (isOverUnderRule(rule)) {
-    const line = extractGoalLine(marketName, marketCode, developerName);
+  const normalized = normalizeOptionRaw(raw);
+  const tokens = tokenizeOption(normalized);
+  const { ruleKey, line } = resolveMarketPresentation(marketContext);
+
+  if (['team_to_score_first', 'team_to_score_last'].includes(ruleKey) && ['draw', 'none', 'no_goal'].includes(normalized)) {
+    return 'Nadie / Sin gol';
+  }
+
+  if (isOverUnderRule({ key: ruleKey })) {
     if (line && (normalized === 'yes' || normalized === 'over')) return `Más de ${line}`;
     if (line && (normalized === 'no' || normalized === 'under')) return `Menos de ${line}`;
   }
 
-  if (rule?.key === 'double_chance') {
-    const normalizedPair = tokens.slice(0, 2);
-    if (normalizedPair.length === 2) return buildDelimitedLabel(normalizedPair, ' o ');
-  }
-
-  if (rule?.key === 'half_time_full_time' && tokens.length >= 2) {
-    return buildDelimitedLabel(tokens.slice(0, 2), ' / ');
-  }
-
-  if ((rule?.key === 'team_to_score_first' || rule?.key === 'team_to_score_last') && normalized === 'draw') {
-    return 'Nadie / Sin gol';
+  if (ruleKey === 'double_chance') {
+    const map = {
+      home_draw: 'Local o Empate',
+      draw_away: 'Empate o Visitante',
+      home_away: 'Local o Visitante',
+    };
+    if (map[normalized]) return map[normalized];
   }
 
   if (tokens.length >= 2 && tokens.every((token) => ['home', 'away', 'draw'].includes(token))) {
     return buildDelimitedLabel(tokens.slice(0, 2), ' / ');
-  }
-
-  if (tokens.length === 2 && ['yes', 'no'].includes(tokens[1])) {
-    return `${translateToken(tokens[0])}/${translateToken(tokens[1])}`;
   }
 
   if (tokens.length) return buildDelimitedLabel(tokens, ' ');
@@ -221,9 +224,7 @@ export const translateOddsLabel = (label, marketContext = {}, { homeTeam, awayTe
     .replace(/\bhome\b/gi, homeTeam || 'Local')
     .replace(/\baway\b/gi, awayTeam || 'Visitante');
 
-  return translateMarketOption(replacedTeams, marketContext)
-    .replace(/\bEmpate\/No\b/gi, 'Empate/No')
-    .replace(/\bEmpate\/Sí\b/gi, 'Empate/Sí');
+  return translateMarketOption(replacedTeams, marketContext);
 };
 
 export const formatProbabilityValue = (value) => {
