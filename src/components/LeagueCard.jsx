@@ -7,7 +7,8 @@ const LeagueCard = ({ league }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const navigate = useNavigate();
 
-  const fixtures = (league.upcoming ?? []).map(normalizeFixture).filter(Boolean);
+  const fixturesRaw = league?.upcoming?.data ?? league?.upcoming ?? [];
+  const fixtures = fixturesRaw.map(normalizeFixture).filter(Boolean);
 
   return (
     <div className="league-card">

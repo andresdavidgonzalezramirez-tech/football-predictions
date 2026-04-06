@@ -27,6 +27,7 @@ const LandingPage = () => {
 
   if (loading) return <div className="landing-page"><p>Loading leagues…</p></div>;
   if (error) return <div className="landing-page"><p>{error}</p></div>;
+  if (!leagues.length) return <div className="landing-page"><p>No hay ligas disponibles.</p></div>;
 
   return (
     <div className="landing-page">
