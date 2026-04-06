@@ -1,4 +1,4 @@
-/* Contenedor Principal */
+/* Contenedor Principal con degradado profundo */
 .match-screen {
   min-height: 100vh;
   padding: 24px;
@@ -25,7 +25,7 @@
   background: rgba(153, 197, 255, 0.12);
 }
 
-/* Tarjetas y Efectos Glass */
+/* Tarjetas y Efectos Glassmorphism */
 .fp-glass-card {
   border: 1px solid rgba(142, 172, 255, 0.22);
   background: linear-gradient(135deg, rgba(19, 30, 54, 0.82), rgba(9, 15, 30, 0.72));
@@ -39,7 +39,20 @@
   box-shadow: 0 0 0 1px rgba(116, 163, 255, 0.22), 0 0 40px rgba(84, 133, 255, 0.15);
 }
 
-/* Hero y Scoreboard */
+/* Layout de Evento (Estructura Sportsbook: 2 Columnas) */
+.fp-event-layout {
+  display: grid;
+  grid-template-columns: 2.1fr 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.fp-event-main, .fp-event-side {
+  display: grid;
+  gap: 10px;
+}
+
+/* Hero y Marcador */
 .fp-hero {
   padding: 28px;
 }
@@ -86,10 +99,6 @@
   color: #9fbeff;
 }
 
-.fp-scoreboard {
-  border-color: rgba(169, 200, 255, 0.35);
-}
-
 .fp-scoreboard-main {
   display: grid;
   gap: 10px;
@@ -114,15 +123,57 @@
   font-size: 1.1rem;
 }
 
-/* Grillas de Información y Módulos */
-.fp-info-grid,
-.fp-modules-grid {
+/* Mercados y Cuotas (Sportsbook Style) */
+.fp-market-groups {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
 
-/* Badges de Estado */
+.fp-market-group {
+  border: 1px solid rgba(143, 170, 226, 0.2);
+  border-radius: 12px;
+  padding: 10px;
+  background: rgba(12, 18, 33, 0.62);
+}
+
+.fp-market-card {
+  border: 1px solid rgba(148, 179, 237, 0.2);
+  background: rgba(18, 26, 46, 0.72);
+  border-radius: 10px;
+  padding: 8px;
+  margin-bottom: 6px;
+}
+
+.fp-market-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 6px;
+}
+
+.fp-odd-pill {
+  border: 1px solid rgba(77, 149, 255, 0.45);
+  border-radius: 8px;
+  padding: 6px 8px;
+  background: linear-gradient(180deg, rgba(27, 66, 125, 0.5), rgba(17, 41, 80, 0.6));
+  color: #e6f0ff;
+  display: grid;
+  gap: 3px;
+  text-align: left;
+  min-height: 52px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.fp-odd-pill:hover {
+  filter: brightness(1.2);
+  border-color: #9fbeff;
+}
+
+.fp-odd-pill strong {
+  font-size: 1.02rem;
+}
+
+/* Badges e Indicadores */
 .fp-badge {
   display: inline-flex;
   gap: 6px;
@@ -134,25 +185,11 @@
   border: 1px solid transparent;
 }
 
-.fp-badge.available {
-  background: rgba(39, 181, 112, 0.18);
-  border-color: rgba(87, 255, 170, 0.4);
-  color: #8dffcc;
-}
+.fp-badge.available { background: rgba(39, 181, 112, 0.18); border-color: rgba(87, 255, 170, 0.4); color: #8dffcc; }
+.fp-badge.restricted { background: rgba(220, 64, 64, 0.18); border-color: rgba(255, 115, 115, 0.4); color: #ffc2c2; }
+.fp-badge.empty { background: rgba(166, 181, 214, 0.14); border-color: rgba(197, 212, 241, 0.35); color: #d8e2fb; }
 
-.fp-badge.restricted {
-  background: rgba(220, 64, 64, 0.18);
-  border-color: rgba(255, 115, 115, 0.4);
-  color: #ffc2c2;
-}
-
-.fp-badge.empty {
-  background: rgba(166, 181, 214, 0.14);
-  border-color: rgba(197, 212, 241, 0.35);
-  color: #d8e2fb;
-}
-
-/* Filas de Datos (MatchRow) */
+/* Filas de Datos */
 .fp-match-row {
   display: flex;
   justify-content: space-between;
@@ -163,55 +200,24 @@
   border: 1px solid rgba(145, 170, 236, 0.2);
 }
 
-.fp-match-row.compact {
-  padding: 8px 10px;
-}
-
-.fp-match-label {
-  color: #bbcff7;
-  font-size: 0.9rem;
-}
-
-.fp-match-value {
-  color: #f3f7ff;
-  font-weight: 700;
-  text-align: right;
-}
-
-/* Secciones Premium / Especiales */
-.fp-analysis-locked {
-  border: 1px dashed rgba(160, 190, 255, 0.45);
-  background: linear-gradient(135deg, rgba(30, 44, 78, 0.76), rgba(16, 23, 43, 0.72));
-  padding: 20px;
-  text-align: center;
-}
-
-.fp-section-card.status-error {
-  border-color: rgba(255, 119, 119, 0.35);
-  background: linear-gradient(135deg, rgba(58, 19, 26, 0.78), rgba(20, 12, 18, 0.74));
-}
-
-/* Skeletons de Carga */
+/* Skeletons */
 .fp-detail-skeleton {
   border-radius: 16px;
   animation: pulse 1.2s infinite ease-in-out;
   background: linear-gradient(90deg, rgba(18, 28, 52, 0.6), rgba(42, 60, 102, 0.52), rgba(18, 28, 52, 0.6));
 }
-
 .fp-detail-skeleton.hero { height: 250px; }
 .fp-detail-skeleton.panel { height: 140px; }
 .fp-detail-skeleton.modules { height: 280px; }
 
 @keyframes pulse {
-  0% { opacity: 0.5; }
+  0%, 100% { opacity: 0.5; }
   50% { opacity: 1; }
-  100% { opacity: 0.5; }
 }
 
 /* Responsividad */
 @media (max-width: 960px) {
-  .fp-info-grid,
-  .fp-modules-grid {
+  .fp-event-layout, .fp-info-grid, .fp-modules-grid {
     grid-template-columns: 1fr;
   }
 
@@ -220,21 +226,11 @@
     gap: 10px;
   }
 
-  .fp-vs {
-    font-size: 1.5rem;
-    margin: 10px 0;
-  }
-
-  .fp-team-block h1 {
-    font-size: 1.4rem;
-  }
-
-  .fp-team-block img {
-    width: 84px;
-    height: 84px;
-  }
-
-  .fp-summary-grid, .fp-context-grid {
+  .fp-team-block h1 { font-size: 1.4rem; }
+  .fp-team-block img { width: 84px; height: 84px; }
+  .fp-vs { font-size: 1.5rem; margin: 10px 0; }
+  
+  .fp-summary-grid, .fp-context-grid, .fp-team-panels {
     grid-template-columns: 1fr;
   }
 }

@@ -97,6 +97,7 @@ const MatchDetails = () => {
         const fixtureResponse = await getFixtureById(fixtureId);
         setFixture(normalizeFixture(fixtureResponse));
 
+        // Módulos independientes
         try {
           const res = await getProbabilitiesByFixture(fixtureId);
           const norm = normalizeProbabilities(res);
@@ -175,11 +176,11 @@ const MatchDetails = () => {
     <main className="match-screen">
       <Link to="/" className="fp-back-link">← Volver</Link>
 
+      {/* Hero: Equipos y Marcador */}
       <GlassCard className="fp-hero">
         <div className="fp-hero-top">
           <span>📅 {formatKickoff(fixture.kickoff)}</span>
           <span>🏆 {fixture.league} · {fixture.country}</span>
-          <span>🏟 {fixture.venue || 'Estadio por confirmar'}</span>
         </div>
         <div className="fp-teams-hero">
           <div className="fp-team-block">
@@ -192,9 +193,6 @@ const MatchDetails = () => {
             <h1>{fixture.participants?.away?.name || 'Visitante'}</h1>
           </div>
         </div>
-      </GlassCard>
-
-      <GlassCard className="fp-scoreboard">
         <div className="fp-scoreboard-main">
           <div className="fp-score-pill">{formatStateLabel(fixture.state)}</div>
           <div className="fp-score-block">
@@ -205,95 +203,95 @@ const MatchDetails = () => {
         </div>
       </GlassCard>
 
-      <section className="fp-info-grid">
-        <GlassCard><MatchRow label="Estado" value={formatStateLabel(fixture.state)} /></GlassCard>
-        <GlassCard><MatchRow label="Predictable" value={fixture.predictable ? 'Sí' : 'No'} /></GlassCard>
-        <GlassCard>
-          <MatchRow 
-            label="Odds / Premium" 
-            value={`${fixture.hasOdds ? 'Disponibles' : 'Sin odds'} · ${fixture.hasPremiumOdds ? 'Premium' : 'Base'}`} 
-          />
-        </GlassCard>
-      </section>
-
-      <GlassCard className="fp-indicators">
-        <h3>Indicadores</h3>
-        <div className="fp-indicator-list">
-          <Badge status={indicatorStatus(fixture.hasOdds)} label="Odds disponibles" />
-          <Badge status={indicatorStatus(fixture.hasPremiumOdds)} label="Premium odds" />
-          <Badge status={fixture.predictable ? 'available' : 'empty'} label={fixture.predictable ? 'Predictible' : 'No predictible'} />
-        </div>
-      </GlassCard>
-
-      <section className="fp-modules-grid">
-        <SectionCard title="Probabilidades" status={moduleStatusToBadge(probabilities.status)} helper={moduleMessage(probabilities.status)}>
-          {probabilities.status === 'success' && (
-            <div className="fp-market-groups">
-              {Object.entries(groupedMarkets).map(([group, markets]) => (
-                <div key={group} className="fp-market-group">
-                  <h4>{group}</h4>
-                  {markets.map((item) => (
-                    <div key={item.id} className="fp-market-card">
-                      <div className="fp-market-head">
-                        <strong>{item.marketName}</strong>
-                      </div>
-                      <div className="fp-market-options">
-                        {item.options.map((opt) => (
-                          <div key={opt.key} className="fp-odd-pill">
-                            <span>{humanizeOption(opt.key)}</span>
-                            <strong>{opt.value}%</strong>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
-          )}
-        </SectionCard>
-
-        <SectionCard title="Value Bets" status={moduleStatusToBadge(valueBets.status)} helper={moduleMessage(valueBets.status)}>
-          {valueBets.status === 'success' && (
-            topValueBet ? (
-              <div className="fp-value-pick">
-                <MatchRow label="Selección" value={topValueBet.bet} compact />
-                <MatchRow label="Bookmaker" value={topValueBet.bookmaker} compact />
-                <MatchRow label="Stake" value={`${topValueBet.suggestedStake}%`} compact />
-              </div>
-            ) : <p className="fp-module-empty">Sin picks disponibles</p>
-          )}
-        </SectionCard>
-
-        <SectionCard title="Odds" status={moduleStatusToBadge(odds.status)} helper={moduleMessage(odds.status)}>
-          {odds.status === 'success' && (
-            <div className="fp-market-groups">
-              {Object.entries(groupedOdds).map(([marketName, marketOdds]) => (
-                <div key={marketName} className="fp-market-card">
-                  <div className="fp-market-head"><strong>{marketName}</strong></div>
-                  <div className="fp-market-options">
-                    {marketOdds.slice(0, 6).map((odd) => (
-                      <div key={odd.id} className="fp-odd-pill">
-                        <span>{odd.label}</span>
-                        <strong>{odd.value}</strong>
+      {/* Layout Principal: 2 Columnas */}
+      <section className="fp-event-layout">
+        
+        {/* Columna Izquierda: Mercados (Probabilidades y Odds) */}
+        <div className="fp-event-main">
+          
+          <SectionCard title="Probabilidades API" status={moduleStatusToBadge(probabilities.status)} helper={moduleMessage(probabilities.status)}>
+            {probabilities.status === 'success' && (
+              <div className="fp-market-groups">
+                {Object.entries(groupedMarkets).map(([group, markets]) => (
+                  <div key={group} className="fp-market-group">
+                    <h4>{group}</h4>
+                    {markets.map((item) => (
+                      <div key={item.id} className="fp-market-card">
+                        <div className="fp-market-head">
+                          <strong>{item.marketName}</strong>
+                          <span>{item.marketCode}</span>
+                        </div>
+                        <div className="fp-market-options">
+                          {item.options.map((opt) => (
+                            <button key={opt.key} className="fp-odd-pill">
+                              <span>{humanizeOption(opt.key)}</span>
+                              <strong>{opt.value}%</strong>
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     ))}
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </SectionCard>
-      </section>
+                ))}
+              </div>
+            )}
+          </SectionCard>
 
-      <GlassCard>
-        <h3>Resumen Final</h3>
-        <div className="fp-summary-grid">
-          <MatchRow label="Ciudad" value={fixture.venueCity || 'Por confirmar'} compact />
-          <MatchRow label="Fixture ID" value={fixture.fixtureId} compact />
-          <MatchRow label="Estado Original" value={fixture.state} compact />
+          <SectionCard title="Cuotas Reales (Odds)" status={moduleStatusToBadge(odds.status)} helper={moduleMessage(odds.status)}>
+            {odds.status === 'success' && (
+              <div className="fp-market-groups">
+                {Object.entries(groupedOdds).map(([marketName, marketOdds]) => (
+                  <div key={marketName} className="fp-market-card">
+                    <div className="fp-market-head"><strong>{marketName}</strong></div>
+                    <div className="fp-market-options">
+                      {marketOdds.slice(0, 9).map((odd) => (
+                        <button key={odd.id} className="fp-odd-pill">
+                          <span>{odd.label || odd.original_label}</span>
+                          <strong>{odd.value}</strong>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </SectionCard>
         </div>
-      </GlassCard>
+
+        {/* Columna Derecha: Indicadores, Value Bets y Resumen */}
+        <aside className="fp-event-side">
+          <SectionCard title="Value Bets" status={moduleStatusToBadge(valueBets.status)}>
+            {valueBets.status === 'success' && topValueBet ? (
+              <div className="fp-value-pick">
+                <MatchRow label="Selección" value={topValueBet.bet} compact />
+                <MatchRow label="Stake" value={`${topValueBet.suggestedStake}%`} compact />
+                <p className="fp-module-empty" style={{marginTop: '8px', fontSize: '0.8rem'}}>Modelado oficial de Sportsmonks</p>
+              </div>
+            ) : <p className="fp-module-empty">Sin picks de valor</p>}
+          </SectionCard>
+
+          <GlassCard className="fp-indicators">
+            <h3>Indicadores</h3>
+            <div className="fp-indicator-list">
+              <Badge status={indicatorStatus(fixture.hasOdds)} label="Cuotas" />
+              <Badge status={indicatorStatus(fixture.hasPremiumOdds)} label="Premium" />
+              <Badge status={fixture.predictable ? 'available' : 'empty'} label="Predictible" />
+            </div>
+          </GlassCard>
+
+          <GlassCard>
+            <h3>Detalles del evento</h3>
+            <div className="fp-context-grid">
+              <MatchRow label="Liga" value={fixture.league} compact />
+              <MatchRow label="País" value={fixture.country} compact />
+              <MatchRow label="Estadio" value={fixture.venue || 'N/D'} compact />
+              <MatchRow label="Jornada" value={fixture.round || 'N/D'} compact />
+              <MatchRow label="Fixture ID" value={fixture.fixtureId} compact />
+            </div>
+          </GlassCard>
+        </aside>
+
+      </section>
     </main>
   );
 };

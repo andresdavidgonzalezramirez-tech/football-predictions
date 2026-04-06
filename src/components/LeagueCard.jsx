@@ -33,7 +33,7 @@ const LeagueCard = ({ league }) => {
     return 'empty';
   };
 
-  // 3. Carga dinámica de probabilidades al expandir
+  // 3. Carga dinámica de probabilidades al expandir la liga
   useEffect(() => {
     if (!isExpanded || fixtures.length === 0) return;
     let cancelled = false;
@@ -42,7 +42,7 @@ const LeagueCard = ({ league }) => {
       const nextMarkets = {};
       const nextStatuses = {};
 
-      // Cargamos solo los primeros 6 para no saturar la API
+      // Cargamos solo los primeros 6 para no saturar la API (estilo densificación sportsbook)
       await Promise.all(
         fixtures.slice(0, 6).map(async (fixture) => {
           try {
@@ -67,10 +67,10 @@ const LeagueCard = ({ league }) => {
     return () => { cancelled = true; };
   }, [isExpanded, fixtures]);
 
-  // 4. Renderizado de la previsualización de cuotas
+  // 4. Renderizado de la previsualización de cuotas (Odds reales)
   const marketOptionsPreview = (fixtureId) => {
     const markets = marketsByFixture[fixtureId] ?? [];
-    const market = markets[0]; // Tomamos el primer mercado disponible (ej. 1X2)
+    const market = markets[0]; // Tomamos el mercado principal
     if (!market?.options?.length) return null;
 
     return market.options.slice(0, 3).map((option) => (
@@ -81,7 +81,7 @@ const LeagueCard = ({ league }) => {
   };
 
   return (
-    <div className="league-card fp-glow">
+    <div className="league-card sportsbook-row">
       <div
         className="league-card-header"
         onClick={() => setIsExpanded((v) => !v)}
@@ -89,65 +89,75 @@ const LeagueCard = ({ league }) => {
         tabIndex={0}
         onKeyDown={(e) => e.key === 'Enter' && setIsExpanded(!isExpanded)}
       >
-        <div className="league-info">
+        <div className="league-info league-info-compact">
           <div className="league-logo-wrap">
-            <img src={league.image_path || '/vite.svg'} alt={league.name} className="league-logo" />
+            <img src={league.image_path || '/vite.svg'} alt={league.name || 'Liga'} className="league-logo" />
           </div>
           <div className="league-details">
             <h3 className="league-name">{league.name}</h3>
-            <p className="league-country">{league.country?.name ?? 'País por confirmar'}</p>
+            <p className="league-country">{league.country?.name ?? 'Dato no disponible'}</p>
           </div>
         </div>
-        <div className="league-meta">
-          <span className="fixtures-count">{fixtures.length} matches</span>
+
+        <div className="league-meta sportsbook-meta">
+          <span className="fixtures-count">{fixtures.length} partidos</span>
+          <Badge
+            status={fixtures.some((f) => f.hasOdds) ? 'available' : 'empty'}
+            label={fixtures.some((f) => f.hasOdds) ? 'Con cuotas' : 'Sin cuotas'}
+          />
         </div>
       </div>
 
       {isExpanded && (
-        <div className="fixtures-list">
+        <div className="fixtures-list sportsbook-table">
+          {/* Cabecera de tabla estilo Sportsbook */}
+          <div className="fixture-table-head">
+            <span>Hora</span>
+            <span>Partido</span>
+            <span>Mercado principal</span>
+            <span>Estado</span>
+          </div>
+
           {fixtures.map((fixture) => (
             <div
               key={fixture.fixtureId}
-              className="fixture-item"
+              className="fixture-item sportsbook-fixture-row"
+              role="button"
+              tabIndex={0}
               onClick={() => navigate(`/match/${fixture.fixtureId}`)}
+              onKeyDown={(e) => e.key === 'Enter' && navigate(`/match/${fixture.fixtureId}`)}
             >
-              <div className="fixture-core">
-                <div className="fixture-teams">
-                  <div className="team-block">
-                    <img src={fixture.homeLogo || '/vite.svg'} alt="Home" />
-                    <span className="team-name">{fixture.participants?.home?.name || 'Local'}</span>
-                  </div>
-                  <strong className="fixture-vs">VS</strong>
-                  <div className="team-block">
-                    <img src={fixture.awayLogo || '/vite.svg'} alt="Away" />
-                    <span className="team-name">{fixture.participants?.away?.name || 'Visitante'}</span>
-                  </div>
-                </div>
+              {/* Columna 1: Hora */}
+              <div className="fixture-time">{fixture.kickoff || 'Hora N/D'}</div>
 
-                <div className="fixture-meta">
-                  <span className="fixture-date">{fixture.kickoff || 'Fecha pendiente'}</span>
-                  <span className="fixture-venue">{fixture.venue || 'Estadio pendiente'}</span>
-                  
-                  <div className="fixture-market-preview">
-                    {marketOptionsPreview(fixture.fixtureId) || (
-                      <span className="fixture-extra">
-                        {marketStatusByFixture[fixture.fixtureId] === 'restricted'
-                          ? 'Módulo Premium'
-                          : 'Sin datos de mercado'}
-                      </span>
-                    )}
-                  </div>
+              {/* Columna 2: Equipos */}
+              <div className="fixture-teams compact">
+                <div className="team-block">
+                  <img src={fixture.homeLogo || '/vite.svg'} alt="Home" />
+                  <span className="team-name">{fixture.participants?.home?.name || 'Local'}</span>
+                </div>
+                <strong className="fixture-vs">vs</strong>
+                <div className="team-block">
+                  <img src={fixture.awayLogo || '/vite.svg'} alt="Away" />
+                  <span className="team-name">{fixture.participants?.away?.name || 'Visitante'}</span>
                 </div>
               </div>
 
+              {/* Columna 3: Mercado (Preview dinámico) */}
+              <div className="fixture-market-preview">
+                {marketOptionsPreview(fixture.fixtureId) || (
+                  <span className="fixture-extra">
+                    {marketStatusByFixture[fixture.fixtureId] === 'restricted'
+                      ? 'No incluido en plan'
+                      : 'Sin datos'}
+                  </span>
+                )}
+              </div>
+
+              {/* Columna 4: Badges de Estado */}
               <div className="fixture-badges">
-                <Badge status={fixture.hasOdds ? 'available' : 'empty'} label="Odds" />
-                <Badge status={fixture.hasPremiumOdds ? 'available' : 'restricted'} label="Premium" />
-                <Badge status={getPredictableBadge(fixture)} label="Predictible" />
-                <Badge 
-                  status={fixture.placeholder ? 'empty' : 'available'} 
-                  label={fixture.placeholder ? 'Placeholder API' : 'Fixture oficial'} 
-                />
+                <Badge status={fixture.hasOdds ? 'available' : 'empty'} label="Cuotas" />
+                <Badge status={getPredictableBadge(fixture)} label="Predicción" />
               </div>
             </div>
           ))}
