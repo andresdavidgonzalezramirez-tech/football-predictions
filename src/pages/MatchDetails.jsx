@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import {
   getFixtureById,
   getProbabilitiesByFixture,
+  getOddsByFixture,
 } from '../services/sportsmonksApi';
 import GlassCard from '../components/GlassCard';
 import MatchRow from '../components/MatchRow';
@@ -13,6 +14,10 @@ import {
   formatProbabilityValue,
   translateMarketTitle,
 } from '../utils/marketTranslations';
+import {
+  resolveOddsMarketTitle,
+  resolveOddsSelectionLabel,
+} from '../utils/oddsPresentation';
 import './MatchDetails.css';
 
 // --- Funciones de utilidad ---
@@ -50,6 +55,7 @@ const MatchDetails = () => {
   const { fixtureId } = useParams();
   const [fixture, setFixture] = useState(null);
   const [probabilities, setProbabilities] = useState(toModuleState('empty', []));
+  const [odds, setOdds] = useState(toModuleState('empty', []));
   const [selectedMarketCategory, setSelectedMarketCategory] = useState('');
   const [loading, setLoading] = useState(true);
   const [fatalError, setFatalError] = useState('');
@@ -63,12 +69,20 @@ const MatchDetails = () => {
         const fixtureResponse = await getFixtureById(fixtureId);
         setFixture(normalizeFixture(fixtureResponse));
 
-        // Carga de módulos secundarios
+        // Carga de Probabilidades
         try {
-          const res = await getProbabilitiesByFixture(fixtureId);
-          const norm = normalizeProbabilities(res);
-          setProbabilities(toModuleState(norm.items.length ? 'success' : 'empty', norm.items));
+          const resProbs = await getProbabilitiesByFixture(fixtureId);
+          const normProbs = normalizeProbabilities(resProbs);
+          setProbabilities(toModuleState(normProbs.items.length ? 'success' : 'empty', normProbs.items));
         } catch (e) { setProbabilities(getErrorState(e)); }
+
+        // Carga de Cuotas Reales (Odds)
+        try {
+          const resOdds = await getOddsByFixture(fixtureId);
+          const itemsOdds = resOdds?.data ?? [];
+          setOdds(toModuleState(itemsOdds.length ? 'success' : 'empty', itemsOdds));
+        } catch (e) { setOdds(getErrorState(e)); }
+
       } catch (error) {
         setFatalError(error.message || 'Error al cargar partido');
       } finally {
@@ -95,6 +109,16 @@ const MatchDetails = () => {
       setSelectedMarketCategory(marketCategories[0]);
     }
   }, [marketCategories, selectedMarketCategory]);
+
+  const groupedOdds = useMemo(() => {
+    const groups = {};
+    (odds.data ?? []).forEach((odd) => {
+      const key = odd.market?.name || odd.market_description || `Mercado ${odd.market_id ?? ''}`;
+      groups[key] = groups[key] ?? [];
+      groups[key].push(odd);
+    });
+    return groups;
+  }, [odds.data]);
 
   if (loading) {
     return (
@@ -129,26 +153,27 @@ const MatchDetails = () => {
         <div className="fp-teams-hero">
           <div className="fp-team-block">
             <img src={fixture.homeLogo || '/vite.svg'} alt="Home" />
-            <h1>{fixture.participants?.home?.name || 'Local'}</h1>
+            <h1 translate="no">{fixture.participants?.home?.name || 'Local'}</h1>
           </div>
           <div className="fp-vs">VS</div>
           <div className="fp-team-block">
             <img src={fixture.awayLogo || '/vite.svg'} alt="Away" />
-            <h1>{fixture.participants?.away?.name || 'Visitante'}</h1>
+            <h1 translate="no">{fixture.participants?.away?.name || 'Visitante'}</h1>
           </div>
         </div>
         <div className="fp-scoreboard-main">
           <div className="fp-score-pill">{formatStateLabel(fixture.state)}</div>
           <div className="fp-score-block">
-            <span>{fixture.participants?.home?.name}</span>
+            <span translate="no">{fixture.participants?.home?.name}</span>
             <strong>— : —</strong>
-            <span>{fixture.participants?.away?.name}</span>
+            <span translate="no">{fixture.participants?.away?.name}</span>
           </div>
         </div>
       </GlassCard>
 
       <section className="fp-event-layout">
         <div className="fp-event-main">
+          {/* Módulo de Probabilidades algorítmicas */}
           <SectionCard title="Probabilidades API" status={moduleStatusToBadge(probabilities.status)} helper={moduleMessage(probabilities.status)}>
             {probabilities.status === 'success' && (
               <div className="fp-market-groups">
@@ -186,6 +211,31 @@ const MatchDetails = () => {
             )}
           </SectionCard>
 
+          {/* Módulo de Cuotas de Mercado (Odds) */}
+          <SectionCard title="Cuotas Reales (Odds)" status={moduleStatusToBadge(odds.status)}>
+            {odds.status === 'success' && (
+              <div className="fp-market-groups">
+                {Object.entries(groupedOdds).map(([marketName, marketOdds]) => (
+                  <div key={marketName} className="fp-market-card">
+                    <div className="fp-market-head">
+                      <strong translate="no">{resolveOddsMarketTitle(marketName)}</strong>
+                    </div>
+                    <div className="fp-market-options">
+                      {marketOdds.map((odd) => (
+                        <button key={odd.id} className="fp-odd-pill">
+                          <span translate="no">{resolveOddsSelectionLabel(odd, {
+                            homeTeam: fixture.participants?.home?.name,
+                            awayTeam: fixture.participants?.away?.name,
+                          })}</span>
+                          <strong>{odd.value}</strong>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </SectionCard>
         </div>
 
         <aside className="fp-event-side">
