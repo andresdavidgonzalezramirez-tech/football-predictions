@@ -235,7 +235,10 @@ const MatchDetails = () => {
                     <div className="fp-market-options">
                       {marketOdds.map((odd) => (
                         <button key={odd.id} className="fp-odd-pill">
-                          <span>{resolveOddsSelectionLabel(odd)}</span>
+                          <span>{resolveOddsSelectionLabel(odd, {
+                            homeTeam: fixture.participants?.home?.name,
+                            awayTeam: fixture.participants?.away?.name,
+                          })}</span>
                           <strong>{odd.value}</strong>
                         </button>
                       ))}
