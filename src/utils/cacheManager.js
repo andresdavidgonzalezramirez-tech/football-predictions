@@ -1,13 +1,13 @@
 /**
- * Cache Manager for Bookmaker Odds
+ * Cache Manager for API responses
  * Implements localStorage caching with TTL (Time To Live)
  * Reduces API calls and improves performance
  */
 
 const CACHE_VERSION = 'v2';
-const CACHE_PREFIX = `odds_cache_${CACHE_VERSION}_`;
+const CACHE_PREFIX = `app_cache_${CACHE_VERSION}_`;
 const DEFAULT_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
-const LEGACY_PREFIX = 'odds_cache_';
+const LEGACY_PREFIXES = ['app_cache_', 'odds_cache_'];
 
 const isPlainObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 
@@ -146,7 +146,7 @@ export const clearAllCache = () => {
   try {
     const keys = Object.keys(localStorage);
     keys.forEach(key => {
-      if (key.startsWith(CACHE_PREFIX) || key.startsWith(LEGACY_PREFIX)) {
+      if (key.startsWith(CACHE_PREFIX) || LEGACY_PREFIXES.some((prefix) => key.startsWith(prefix))) {
         localStorage.removeItem(key);
       }
     });
@@ -202,7 +202,7 @@ export const purgeLegacyCacheEntries = () => {
   try {
     const keys = Object.keys(localStorage);
     keys.forEach((key) => {
-      if (key.startsWith(LEGACY_PREFIX) && !key.startsWith(CACHE_PREFIX)) {
+      if (LEGACY_PREFIXES.some((prefix) => key.startsWith(prefix)) && !key.startsWith(CACHE_PREFIX)) {
         localStorage.removeItem(key);
       }
     });

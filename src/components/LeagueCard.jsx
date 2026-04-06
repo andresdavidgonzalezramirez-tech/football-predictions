@@ -92,10 +92,7 @@ const LeagueCard = ({ league }) => {
 
         <div className="league-meta sportsbook-meta">
           <span className="fixtures-count">{fixtures.length} partidos</span>
-          <Badge
-            status={fixtures.some((f) => f.hasOdds) ? 'available' : 'empty'}
-            label={fixtures.some((f) => f.hasOdds) ? 'Con cuotas' : 'Sin cuotas'}
-          />
+          <Badge status="available" label="Probabilidades API" />
         </div>
       </div>
 
@@ -147,7 +144,6 @@ const LeagueCard = ({ league }) => {
 
               {/* Columna 4: Indicadores de estado */}
               <div className="fixture-badges">
-                <Badge status={fixture.hasOdds ? 'available' : 'empty'} label="Cuotas" />
                 <Badge status={getPredictableBadge(fixture)} label="Predicción" />
               </div>
             </div>

@@ -1,19 +1,24 @@
 import { useEffect, useMemo, useState } from 'react';
-import {
-  getGlobalValueBets,
-  getLeaguesWithUpcoming,
-  getProbabilitiesByFixture,
-} from '../services/sportsmonksApi';
+import { Link } from 'react-router-dom';
+import { getLeaguesWithUpcoming } from '../services/sportsmonksApi';
 import normalizeFixture from '../utils/normalizers/normalizeFixture';
-import normalizeProbabilities from '../utils/normalizers/normalizeProbabilities';
-import normalizeValueBets from '../utils/normalizers/normalizeValueBets';
-import buildGeneralMarketItem from '../utils/viewModels/buildGeneralMarketItem';
-import ValueAlertCard from '../components/ValueAlertCard';
-import GeneralMarketRow from '../components/GeneralMarketRow';
-import ValueEmptyState from '../components/ValueEmptyState';
+
+const toDateKey = (value) => {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+};
+
+const formatKickoff = (value) => {
+  if (!value) return 'Hora N/D';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Hora N/D';
+  return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+};
 
 const MarketOverview = () => {
-  const [items, setItems] = useState([]);
+  const [fixtures, setFixtures] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -23,43 +28,13 @@ const MarketOverview = () => {
       setError(null);
 
       try {
-        const [leaguesResponse, valueBetsResponse] = await Promise.all([
-          getLeaguesWithUpcoming(),
-          getGlobalValueBets({ per_page: 50 }),
-        ]);
-
+        const leaguesResponse = await getLeaguesWithUpcoming();
         const rawFixtures = (leaguesResponse?.data ?? []).flatMap(
           (league) => league?.upcoming?.data ?? league?.upcoming ?? [],
         );
-        const normalizedFixtures = rawFixtures.map(normalizeFixture).filter(Boolean);
-        const valueBets = normalizeValueBets(valueBetsResponse);
-
-        const fixtureIds = normalizedFixtures.slice(0, 10).map((fixture) => fixture.fixtureId);
-        const probsByFixture = {};
-
-        await Promise.all(
-          fixtureIds.map(async (fixtureId) => {
-            try {
-              const response = await getProbabilitiesByFixture(fixtureId);
-              probsByFixture[fixtureId] = normalizeProbabilities(response);
-            } catch {
-              probsByFixture[fixtureId] = { items: [] };
-            }
-          }),
-        );
-
-        const merged = normalizedFixtures.map((fixture) => {
-          const valueBet = valueBets.find((candidate) => candidate.fixtureId === fixture.fixtureId) || null;
-          return buildGeneralMarketItem({
-            fixture,
-            probabilities: probsByFixture[fixture.fixtureId] ?? { items: [] },
-            valueBet,
-          });
-        });
-
-        setItems(merged);
+        setFixtures(rawFixtures.map(normalizeFixture).filter(Boolean));
       } catch (err) {
-        setError(err.message ?? 'No se pudo construir el dashboard de mercado.');
+        setError(err.message ?? 'No se pudo construir el resumen de mercado.');
       } finally {
         setLoading(false);
       }
@@ -68,27 +43,41 @@ const MarketOverview = () => {
     load();
   }, []);
 
-  const elitePicks = useMemo(() => items.filter((item) => item.isValuePick), [items]);
+  const todayKey = useMemo(() => toDateKey(new Date()), []);
 
-  if (loading) return <main className="dashboard"><p>Cargando Market Overview…</p></main>;
+  const todayFixtures = useMemo(() => (
+    fixtures
+      .filter((fixture) => toDateKey(fixture.kickoff) === todayKey)
+      .sort((a, b) => new Date(a.kickoff).getTime() - new Date(b.kickoff).getTime())
+  ), [fixtures, todayKey]);
+
+  if (loading) return <main className="dashboard"><p>Cargando resumen de mercado…</p></main>;
   if (error) return <main className="dashboard"><p>{error}</p></main>;
 
   return (
     <main className="dashboard">
-      <section className="premium-section">
-        <h2>Premium / Elite</h2>
-        {elitePicks.length === 0 ? (
-          <ValueEmptyState message="No hay oportunidades elite actualmente." />
-        ) : (
-          elitePicks.map((item) => <ValueAlertCard key={`elite-${item.fixtureId}`} item={item} />)
-        )}
-      </section>
-
       <section className="general-list">
-        <h2>Listado general</h2>
-        {items.map((item) => (
-          <GeneralMarketRow key={`general-${item.fixtureId}`} item={item} />
-        ))}
+        <h2>Resumen de mercado — Partidos de hoy</h2>
+        {todayFixtures.length === 0 ? (
+          <p>No hay partidos programados para hoy.</p>
+        ) : (
+          <div className="today-fixtures-list">
+            {todayFixtures.map((fixture) => (
+              <article key={fixture.fixtureId} className="today-fixture-card">
+                <div>
+                  <h4>{fixture.teamsLabel}</h4>
+                  <small>{fixture.league} • {fixture.country}</small>
+                </div>
+                <div>
+                  <small>{formatKickoff(fixture.kickoff)}</small>
+                </div>
+                <div>
+                  <Link to={`/match/${fixture.fixtureId}`}>Ver detalle</Link>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
       </section>
     </main>
   );
