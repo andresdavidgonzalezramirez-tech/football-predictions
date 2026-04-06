@@ -1,7 +1,8 @@
 const normalizeMarketKey = (type) => type?.code || type?.name || `type_${type?.id ?? 'unknown'}`;
 
 export const normalizeProbabilities = (response) => {
-  const items = response?.data ?? [];
+  const raw = response?.data ?? response ?? [];
+  const items = Array.isArray(raw) ? raw : raw?.data ?? [];
   const byMarket = {};
 
   items.forEach((item) => {

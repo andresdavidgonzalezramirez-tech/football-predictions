@@ -12,12 +12,27 @@ import normalizeValueBets from '../utils/normalizers/normalizeValueBets';
 import PredictionDisplay from '../components/PredictionDisplay';
 import ValueAlertCard from '../components/ValueAlertCard';
 
+const asModuleState = (status, payload = {}) => ({ status, ...payload });
+
+const getModuleUi = (moduleState, emptyMessage) => {
+  if (moduleState.status === 'restricted') {
+    return <p>Este módulo no está incluido en tu plan actual de Sportmonks.</p>;
+  }
+  if (moduleState.status === 'error') {
+    return <p>Error consultando módulo: {moduleState.message}</p>;
+  }
+  if (moduleState.status === 'empty') {
+    return <p>{emptyMessage}</p>;
+  }
+  return null;
+};
+
 const MatchDetails = () => {
   const { fixtureId } = useParams();
   const [fixture, setFixture] = useState(null);
-  const [probabilities, setProbabilities] = useState({ items: [] });
-  const [valueBets, setValueBets] = useState([]);
-  const [odds, setOdds] = useState([]);
+  const [probabilitiesModule, setProbabilitiesModule] = useState(asModuleState('idle', { data: { items: [] } }));
+  const [valueBetsModule, setValueBetsModule] = useState(asModuleState('idle', { data: [] }));
+  const [oddsModule, setOddsModule] = useState(asModuleState('idle', { data: [] }));
   const [errors, setErrors] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -25,6 +40,9 @@ const MatchDetails = () => {
     const load = async () => {
       setLoading(true);
       const nextErrors = [];
+      setProbabilitiesModule(asModuleState('idle', { data: { items: [] } }));
+      setValueBetsModule(asModuleState('idle', { data: [] }));
+      setOddsModule(asModuleState('idle', { data: [] }));
 
       try {
         const fixtureResponse = await getFixtureById(fixtureId);
@@ -33,23 +51,59 @@ const MatchDetails = () => {
 
         try {
           const probResponse = await getProbabilitiesByFixture(fixtureId);
-          setProbabilities(normalizeProbabilities(probResponse));
+          const normalized = normalizeProbabilities(probResponse);
+          if (!normalized.items.length) {
+            setProbabilitiesModule(asModuleState('empty', { data: normalized }));
+          } else {
+            setProbabilitiesModule(asModuleState('success', { data: normalized }));
+          }
         } catch (error) {
-          nextErrors.push(error.message);
+          if (error.kind === 'plan_restricted') {
+            setProbabilitiesModule(asModuleState('restricted', { message: error.message }));
+          } else if (error.kind === 'not_found') {
+            setProbabilitiesModule(asModuleState('empty', { message: error.message, data: { items: [] } }));
+          } else {
+            setProbabilitiesModule(asModuleState('error', { message: error.message }));
+            nextErrors.push(`Probabilities: ${error.message}`);
+          }
         }
 
         try {
           const valueResponse = await getValueBetsByFixture(fixtureId);
-          setValueBets(normalizeValueBets(valueResponse));
+          const normalized = normalizeValueBets(valueResponse);
+          if (!normalized.length) {
+            setValueBetsModule(asModuleState('empty', { data: normalized }));
+          } else {
+            setValueBetsModule(asModuleState('success', { data: normalized }));
+          }
         } catch (error) {
-          nextErrors.push(error.message);
+          if (error.kind === 'plan_restricted') {
+            setValueBetsModule(asModuleState('restricted', { message: error.message }));
+          } else if (error.kind === 'not_found') {
+            setValueBetsModule(asModuleState('empty', { message: error.message, data: [] }));
+          } else {
+            setValueBetsModule(asModuleState('error', { message: error.message }));
+            nextErrors.push(`Value bets: ${error.message}`);
+          }
         }
 
         try {
           const oddsResponse = await getOddsByFixture(fixtureId);
-          setOdds(oddsResponse?.data ?? []);
+          const oddsData = oddsResponse?.data ?? [];
+          if (!oddsData.length) {
+            setOddsModule(asModuleState('empty', { data: [] }));
+          } else {
+            setOddsModule(asModuleState('success', { data: oddsData }));
+          }
         } catch (error) {
-          nextErrors.push(error.message);
+          if (error.kind === 'plan_restricted') {
+            setOddsModule(asModuleState('restricted', { message: error.message }));
+          } else if (error.kind === 'not_found') {
+            setOddsModule(asModuleState('empty', { message: error.message, data: [] }));
+          } else {
+            setOddsModule(asModuleState('error', { message: error.message }));
+            nextErrors.push(`Odds: ${error.message}`);
+          }
         }
       } catch (error) {
         nextErrors.push(error.message);
@@ -62,10 +116,10 @@ const MatchDetails = () => {
     load();
   }, [fixtureId]);
 
-  const topValuePick = useMemo(
-    () => valueBets.find((valueBet) => valueBet.isValuePick) ?? null,
-    [valueBets],
-  );
+  const topValuePick = useMemo(() => {
+    const valueBets = valueBetsModule.data ?? [];
+    return valueBets.find((valueBet) => valueBet.isValuePick) ?? null;
+  }, [valueBetsModule]);
 
   if (loading) return <div className="match-details-page"><p>Cargando detalle…</p></div>;
 
@@ -82,10 +136,24 @@ const MatchDetails = () => {
     <div className="match-details-page">
       <Link to="/">← Volver</Link>
       <h1>{fixture.teamsLabel}</h1>
-      <p>League: {fixture.league}</p>
-      <p>Kickoff: {fixture.kickoff ?? 'No disponible'}</p>
-      <p>State: {fixture.state}</p>
-      <p>Predictability (metadata.predictable): {fixture.predictable === null ? 'No disponible' : String(fixture.predictable)}</p>
+      <p><strong>Fixture ID:</strong> {fixture.fixtureId}</p>
+      <p><strong>Liga:</strong> {fixture.league} ({fixture.country})</p>
+      <p><strong>Fecha/hora:</strong> {fixture.kickoff ?? 'No disponible'} {fixture.timezone ? `(${fixture.timezone})` : ''}</p>
+      <p><strong>Estado:</strong> {fixture.state}</p>
+      <p><strong>Season:</strong> {fixture.season ?? 'No disponible'} | <strong>Round:</strong> {fixture.round ?? 'No disponible'} | <strong>Stage:</strong> {fixture.stage ?? 'No disponible'}</p>
+      <p><strong>Venue:</strong> {fixture.venue ?? 'No disponible'}{fixture.venueCity ? `, ${fixture.venueCity}` : ''}</p>
+      <p><strong>metadata.predictable:</strong> {fixture.predictable === null ? 'No disponible' : String(fixture.predictable)}</p>
+      <p><strong>Indicadores:</strong> has_odds={String(fixture.hasOdds)} | has_premium_odds={String(fixture.hasPremiumOdds)} | placeholder={fixture.placeholder ?? 'No disponible'}</p>
+      <div style={{ display: 'flex', gap: '1rem' }}>
+        <div>
+          <strong>Home:</strong> {fixture.participants?.home?.name ?? 'No disponible'}
+          {fixture.homeLogo ? <div><img src={fixture.homeLogo} alt="home logo" width="40" /></div> : null}
+        </div>
+        <div>
+          <strong>Away:</strong> {fixture.participants?.away?.name ?? 'No disponible'}
+          {fixture.awayLogo ? <div><img src={fixture.awayLogo} alt="away logo" width="40" /></div> : null}
+        </div>
+      </div>
 
       {errors.length > 0 && (
         <div className="card p-4" style={{ marginTop: '1rem' }}>
@@ -98,12 +166,14 @@ const MatchDetails = () => {
 
       <section style={{ marginTop: '1rem' }}>
         <h2>Probabilities</h2>
-        <PredictionDisplay probabilities={probabilities} />
+        {probabilitiesModule.status === 'success'
+          ? <PredictionDisplay probabilities={probabilitiesModule.data} />
+          : getModuleUi(probabilitiesModule, 'No hay probabilidades disponibles para este partido.')}
       </section>
 
       <section style={{ marginTop: '1rem' }}>
         <h2>Value Bets</h2>
-        {topValuePick ? (
+        {valueBetsModule.status === 'success' && topValuePick ? (
           <ValueAlertCard
             item={{
               ...fixture,
@@ -113,17 +183,30 @@ const MatchDetails = () => {
                 probabilities: 'predictions/probabilities',
                 valueBets: 'predictions/value-bets',
               },
-              apiProbability: probabilities.items[0]?.probability ?? null,
+              apiProbability: probabilitiesModule.data?.items?.[0]?.probability ?? null,
             }}
           />
+        ) : valueBetsModule.status === 'success' ? (
+          <p>No hay apuestas de valor disponibles para este partido.</p>
         ) : (
-          <p>No hay value bet disponible para este fixture.</p>
+          getModuleUi(valueBetsModule, 'No hay apuestas de valor disponibles para este partido.')
         )}
       </section>
 
       <section style={{ marginTop: '1rem' }}>
         <h2>Odds</h2>
-        {odds.length === 0 ? <p>No disponible</p> : <p>Odds records: {odds.length}</p>}
+        {oddsModule.status === 'success' ? (
+          <div className="card p-6">
+            <p>Registros de odds: {oddsModule.data.length}</p>
+            <ul>
+              {oddsModule.data.slice(0, 5).map((odd) => (
+                <li key={odd.id}>
+                  {odd.market?.name ?? odd.market_description ?? 'Mercado'} - {odd.label ?? odd.original_label ?? 'Selección'}: {odd.value ?? 'N/D'}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : getModuleUi(oddsModule, 'No hay odds disponibles para este partido.')}
       </section>
     </div>
   );

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getCache, setCache } from '../utils/cacheManager';
+import { getCache, setCache, shouldCacheData } from '../utils/cacheManager';
 import { logApiRequest } from '../utils/apiMonitor';
 
 const apiClient = axios.create({
@@ -8,29 +8,72 @@ const apiClient = axios.create({
 });
 
 const isRateLimitError = (error) => error?.response?.status === 429;
+const isPlanRestrictedStatus = (status) => status === 402 || status === 403;
+const isResourceMissingStatus = (status) => status === 404;
+
+const buildErrorKind = (status, code) => {
+  if (isRateLimitError({ response: { status } })) return 'rate_limit';
+  if (isPlanRestrictedStatus(status) || code === 'PLAN_RESTRICTED') return 'plan_restricted';
+  if (isResourceMissingStatus(status)) return 'not_found';
+  if (code === 'TOKEN_MISSING' || status === 401) return 'auth';
+  return 'technical';
+};
 
 const mapApiError = (error, fallbackMessage) => {
+  const status = error?.response?.status ?? error?.status ?? 500;
+  const upstreamPayload = error?.response?.data;
+  const upstreamCode = upstreamPayload?.code ?? error?.code ?? null;
+  const upstreamMessage = upstreamPayload?.message ?? upstreamPayload?.error ?? error?.message ?? null;
+
   if (isRateLimitError(error)) {
     return {
       code: 'RATE_LIMIT_EXCEEDED',
       message: 'Rate limit 429: agotaste las llamadas por entidad. Reintenta en unos minutos.',
       status: 429,
+      kind: 'rate_limit',
     };
   }
 
-  if (error?.response?.status === 403 || error?.response?.status === 402) {
+  if (isPlanRestrictedStatus(status) || upstreamCode === 'PLAN_RESTRICTED') {
     return {
-      code: 'ADDON_OR_PLAN_UNAVAILABLE',
-      message: 'El plan actual no incluye este módulo (predictions/value-bets) o no está activo.',
-      status: error.response.status,
+      code: upstreamCode || 'ADDON_OR_PLAN_UNAVAILABLE',
+      message: 'El plan actual no incluye este módulo o addon, o no está activo.',
+      status,
+      kind: 'plan_restricted',
+    };
+  }
+
+  if (isResourceMissingStatus(status)) {
+    return {
+      code: upstreamCode || 'RESOURCE_NOT_FOUND',
+      message: upstreamMessage || 'El recurso solicitado no existe o no está disponible.',
+      status,
+      kind: 'not_found',
+    };
+  }
+
+  if (upstreamCode === 'TOKEN_MISSING' || status === 401) {
+    return {
+      code: upstreamCode || 'AUTH_ERROR',
+      message: upstreamMessage || 'Token inválido o no configurado.',
+      status,
+      kind: 'auth',
     };
   }
 
   return {
-    code: 'API_REQUEST_FAILED',
-    message: fallbackMessage,
-    status: error?.response?.status ?? 500,
+    code: upstreamCode || 'API_REQUEST_FAILED',
+    message: upstreamMessage || fallbackMessage,
+    status,
+    kind: buildErrorKind(status, upstreamCode),
   };
+};
+
+const isValidPayload = (data) => {
+  if (!shouldCacheData(data)) return false;
+  if (typeof data !== 'object' || data === null) return true;
+  if (data.error === true) return false;
+  return true;
 };
 
 const fetchWithCache = async ({ cacheKey, endpoint, params = {}, ttl = 60_000, fallbackMessage }) => {
@@ -43,7 +86,9 @@ const fetchWithCache = async ({ cacheKey, endpoint, params = {}, ttl = 60_000, f
   try {
     logApiRequest(endpoint, false);
     const response = await apiClient.get(endpoint, { params });
-    setCache(cacheKey, response.data, ttl);
+    if (isValidPayload(response.data)) {
+      setCache(cacheKey, response.data, ttl);
+    }
     return response.data;
   } catch (error) {
     throw mapApiError(error, fallbackMessage);
