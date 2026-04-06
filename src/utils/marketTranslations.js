@@ -150,7 +150,7 @@ const tokenizeOption = (rawOption) => String(rawOption ?? '')
   .split(/[_-]+/)
   .filter(Boolean);
 
-const translateToken = (token) => BASE_OPTION_LABELS[token] ?? sentenceCase(token);
+const translateToken = (token) => (/^empatiz/.test(token) ? 'Empate' : (BASE_OPTION_LABELS[token] ?? sentenceCase(token)));
 
 const buildDelimitedLabel = (tokens, separator = ' / ') => tokens
   .map(translateToken)
