@@ -41,7 +41,7 @@ const LandingPage = () => {
   if (error) {
     return (
       <main className="landing-page">
-        < GlassCard>
+        <GlassCard>
           <h2>Error al cargar ligas</h2>
           <p>{error}</p>
         </GlassCard>
@@ -82,17 +82,17 @@ const LandingPage = () => {
   return (
     <main className="landing-page">
       <header className="page-header fp-glow">
-        <h1>Football Predictions</h1>
+        <h1>Predicción de fútbol</h1>
         <p>Vista limpia de ligas, partidos e indicadores clave.</p>
         
         <div className="landing-kpis">
           <span>Ligas: <strong>{leagues.length}</strong></span>
           <span>Partidos listados: <strong>{totalFixtures}</strong></span>
           <span>Ligas con país: <strong>{leaguesWithCountry}</strong></span>
-          <span>Fixtures predictables: <strong>{predictableFixtures}</strong></span>
+          <span>Partidos predecibles: <strong>{predictableFixtures}</strong></span>
         </div>
         
-        <Link to="/market" className="retry-button">Abrir Market Overview</Link>
+        <Link to="/market" className="retry-button">Abrir resumen de mercado</Link>
       </header>
 
       <div className="leagues-container">

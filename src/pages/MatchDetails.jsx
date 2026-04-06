@@ -13,6 +13,12 @@ import SectionCard from '../components/SectionCard';
 import normalizeFixture from '../utils/normalizers/normalizeFixture';
 import normalizeProbabilities from '../utils/normalizers/normalizeProbabilities';
 import normalizeValueBets from '../utils/normalizers/normalizeValueBets';
+import {
+  formatProbabilityValue,
+  translateMarketTitle,
+  translateOddsLabel,
+  translateOptionKey,
+} from '../utils/marketTranslations';
 import './MatchDetails.css';
 
 // --- Funciones de utilidad ---
@@ -40,7 +46,7 @@ const classifyMarketGroup = (code = '', name = '') => {
   if (v.includes('first-half') || v.includes('1st-half') || v.includes('opening')) return 'Inicio Más/Menos';
   if (v.includes('corner')) return 'Córners';
   if (v.includes('home-over-under') || v.includes('home_under') || v.includes('home over')) return 'Local Más/Menos';
-  if (v.includes('away-over-under') || v.includes('away_under') || v.includes('away over')) return 'Fuera Más/Menos';
+  if (v.includes('away-over-under') || v.includes('away_under') || v.includes('away over')) return 'Visitante Más/Menos';
   if (v.includes('over-under') || v.includes('total')) return 'Más/Menos';
   if (v.includes('draw') || v.includes('result') || v.includes('double-chance')) return 'Resultado';
   return 'Otros mercados';
@@ -95,7 +101,7 @@ const MatchDetails = () => {
         const fixtureResponse = await getFixtureById(fixtureId);
         setFixture(normalizeFixture(fixtureResponse));
 
-        // Carga de módulos independientes
+        // Carga de módulos secundarios
         try {
           const res = await getProbabilitiesByFixture(fixtureId);
           const norm = normalizeProbabilities(res);
@@ -180,7 +186,6 @@ const MatchDetails = () => {
     <main className="match-screen">
       <Link to="/" className="fp-back-link">← Volver</Link>
 
-      {/* Hero Section */}
       <GlassCard className="fp-hero">
         <div className="fp-hero-top">
           <span>📅 {formatKickoff(fixture.kickoff)}</span>
@@ -208,12 +213,9 @@ const MatchDetails = () => {
         </div>
       </GlassCard>
 
-      {/* Layout de 2 Columnas estilo Sportsbook */}
       <section className="fp-event-layout">
-        
-        {/* Main Content: Mercados */}
         <div className="fp-event-main">
-          <SectionCard title="Probabilidades" status={moduleStatusToBadge(probabilities.status)} helper={moduleMessage(probabilities.status)}>
+          <SectionCard title="Probabilidades API" status={moduleStatusToBadge(probabilities.status)} helper={moduleMessage(probabilities.status)}>
             {probabilities.status === 'success' && (
               <div className="fp-market-groups">
                 <div className="fp-market-tabs">
@@ -233,14 +235,14 @@ const MatchDetails = () => {
                   {(groupedMarkets[selectedMarketCategory] ?? []).map((item) => (
                     <div key={item.id} className="fp-market-card">
                       <div className="fp-market-head">
-                        <strong>{item.marketName}</strong>
+                        <strong>{translateMarketTitle(item)}</strong>
                         <span>{item.marketCode}</span>
                       </div>
                       <div className="fp-market-options">
                         {item.options.map((opt) => (
                           <button key={opt.key} className="fp-odd-pill">
-                            <span>{humanizeOption(opt.key)}</span>
-                            <strong>{opt.value}%</strong>
+                            <span>{translateOptionKey(opt.key, item)}</span>
+                            <strong>{formatProbabilityValue(opt.value)}</strong>
                           </button>
                         ))}
                       </div>
@@ -251,16 +253,19 @@ const MatchDetails = () => {
             )}
           </SectionCard>
 
-          <SectionCard title="Cuotas Reales" status={moduleStatusToBadge(odds.status)}>
+          <SectionCard title="Cuotas Reales (Odds)" status={moduleStatusToBadge(odds.status)}>
             {odds.status === 'success' && (
               <div className="fp-market-groups">
                 {Object.entries(groupedOdds).map(([marketName, marketOdds]) => (
                   <div key={marketName} className="fp-market-card">
-                    <div className="fp-market-head"><strong>{marketName}</strong></div>
+                    <div className="fp-market-head"><strong>{translateMarketTitle({ marketName })}</strong></div>
                     <div className="fp-market-options">
                       {marketOdds.slice(0, 9).map((odd) => (
                         <button key={odd.id} className="fp-odd-pill">
-                          <span>{odd.label || odd.original_label}</span>
+                          <span>{translateOddsLabel(odd.label || odd.original_label, {
+                            homeTeam: fixture.participants?.home?.name,
+                            awayTeam: fixture.participants?.away?.name,
+                          })}</span>
                           <strong>{odd.value}</strong>
                         </button>
                       ))}
@@ -272,7 +277,6 @@ const MatchDetails = () => {
           </SectionCard>
         </div>
 
-        {/* Sidebar: Información Adicional */}
         <aside className="fp-event-side">
           <SectionCard title="Value Bets" status={moduleStatusToBadge(valueBets.status)}>
             {valueBets.status === 'success' && topValueBet ? (
@@ -286,7 +290,7 @@ const MatchDetails = () => {
           <GlassCard className="fp-indicators">
             <h3>Indicadores</h3>
             <div className="fp-indicator-list">
-              <Badge status={indicatorStatus(fixture.hasOdds)} label="Odds" />
+              <Badge status={indicatorStatus(fixture.hasOdds)} label="Cuotas" />
               <Badge status={indicatorStatus(fixture.hasPremiumOdds)} label="Premium" />
               <Badge status={fixture.predictable ? 'available' : 'empty'} label="Predicción" />
             </div>
@@ -295,14 +299,13 @@ const MatchDetails = () => {
           <GlassCard>
             <h3>Resumen</h3>
             <div className="fp-context-grid">
-              <MatchRow label="Liga" value={fixture.league} compact />
-              <MatchRow label="Estadio" value={fixture.venue || 'N/D'} compact />
-              <MatchRow label="Fixture ID" value={fixture.fixtureId} compact />
-              <MatchRow label="Estado" value={fixture.state} compact />
+              <MatchRow label="Estado" value={formatStateLabel(fixture.state)} compact />
+              <MatchRow label="Temporada" value={fixture.season || 'N/D'} compact />
+              <MatchRow label="Ronda" value={fixture.round || 'N/D'} compact />
+              <MatchRow label="ID Partido" value={fixture.fixtureId || 'N/D'} compact />
             </div>
           </GlassCard>
         </aside>
-
       </section>
     </main>
   );

@@ -4,16 +4,8 @@ import Badge from './Badge';
 import { getProbabilitiesByFixture } from '../services/sportsmonksApi';
 import normalizeProbabilities from '../utils/normalizers/normalizeProbabilities';
 import normalizeFixture from '../utils/normalizers/normalizeFixture';
+import { formatProbabilityValue, translateOptionKey } from '../utils/marketTranslations';
 import './LeagueCard.css';
-
-const OPTION_LABELS = { 
-  yes: 'Sí', 
-  no: 'No', 
-  equal: 'Igual', 
-  home: 'Local', 
-  away: 'Visitante', 
-  draw: 'Empate' 
-};
 
 const LeagueCard = ({ league }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -67,15 +59,15 @@ const LeagueCard = ({ league }) => {
     return () => { cancelled = true; };
   }, [isExpanded, fixtures]);
 
-  // 4. Renderizado de la previsualización de cuotas reales
+  // 4. Renderizado de la previsualización de cuotas reales con traducción
   const marketOptionsPreview = (fixtureId) => {
     const markets = marketsByFixture[fixtureId] ?? [];
-    const market = markets[0]; 
+    const market = markets[0];
     if (!market?.options?.length) return null;
 
     return market.options.slice(0, 3).map((option) => (
       <span key={`${fixtureId}-${option.key}`} className="fixture-market-pill">
-        {OPTION_LABELS[option.key] || option.key}: {option.value}%
+        {translateOptionKey(option.key, market)}: {formatProbabilityValue(option.value)}
       </span>
     ));
   };
@@ -148,8 +140,8 @@ const LeagueCard = ({ league }) => {
                 {marketOptionsPreview(fixture.fixtureId) || (
                   <span className="fixture-extra">
                     {marketStatusByFixture[fixture.fixtureId] === 'restricted'
-                      ? 'No incluido en plan'
-                      : 'Sin datos'}
+                      ? 'No incluido en tu plan'
+                      : 'Sin probabilidades'}
                   </span>
                 )}
               </div>
