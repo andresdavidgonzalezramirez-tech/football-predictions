@@ -2,17 +2,14 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
   getFixtureById,
-  getOddsByFixture,
   getProbabilitiesByFixture,
-  getValueBetsByFixture,
+  getOddsByFixture,
 } from '../services/sportsmonksApi';
-import Badge from '../components/Badge';
 import GlassCard from '../components/GlassCard';
 import MatchRow from '../components/MatchRow';
 import SectionCard from '../components/SectionCard';
 import normalizeFixture from '../utils/normalizers/normalizeFixture';
 import normalizeProbabilities from '../utils/normalizers/normalizeProbabilities';
-import normalizeValueBets from '../utils/normalizers/normalizeValueBets';
 import {
   formatProbabilityValue,
   translateMarketTitle,
@@ -48,8 +45,6 @@ const formatStateLabel = (state = '') => {
   return 'No iniciado';
 };
 
-const indicatorStatus = (value) => (value ? 'available' : 'empty');
-
 const moduleMessage = (status) => {
   if (status === 'success') return 'Datos oficiales listos';
   if (status === 'restricted') return 'Disponible en plan premium';
@@ -60,7 +55,6 @@ const MatchDetails = () => {
   const { fixtureId } = useParams();
   const [fixture, setFixture] = useState(null);
   const [probabilities, setProbabilities] = useState(toModuleState('empty', []));
-  const [valueBets, setValueBets] = useState(toModuleState('empty', []));
   const [odds, setOdds] = useState(toModuleState('empty', []));
   const [selectedMarketCategory, setSelectedMarketCategory] = useState('');
   const [loading, setLoading] = useState(true);
@@ -75,23 +69,18 @@ const MatchDetails = () => {
         const fixtureResponse = await getFixtureById(fixtureId);
         setFixture(normalizeFixture(fixtureResponse));
 
-        // Carga de módulos secundarios
+        // Carga de Probabilidades
         try {
-          const res = await getProbabilitiesByFixture(fixtureId);
-          const norm = normalizeProbabilities(res);
-          setProbabilities(toModuleState(norm.items.length ? 'success' : 'empty', norm.items));
+          const resProbs = await getProbabilitiesByFixture(fixtureId);
+          const normProbs = normalizeProbabilities(resProbs);
+          setProbabilities(toModuleState(normProbs.items.length ? 'success' : 'empty', normProbs.items));
         } catch (e) { setProbabilities(getErrorState(e)); }
 
+        // Carga de Cuotas Reales (Odds)
         try {
-          const res = await getValueBetsByFixture(fixtureId);
-          const norm = normalizeValueBets(res);
-          setValueBets(toModuleState(norm.length ? 'success' : 'empty', norm));
-        } catch (e) { setValueBets(getErrorState(e)); }
-
-        try {
-          const res = await getOddsByFixture(fixtureId);
-          const items = res?.data ?? [];
-          setOdds(toModuleState(items.length ? 'success' : 'empty', items));
+          const resOdds = await getOddsByFixture(fixtureId);
+          const itemsOdds = resOdds?.data ?? [];
+          setOdds(toModuleState(itemsOdds.length ? 'success' : 'empty', itemsOdds));
         } catch (e) { setOdds(getErrorState(e)); }
 
       } catch (error) {
@@ -130,11 +119,6 @@ const MatchDetails = () => {
     });
     return groups;
   }, [odds.data]);
-
-  const topValueBet = useMemo(
-    () => (valueBets.data ?? []).find((item) => item.isValuePick) ?? null,
-    [valueBets.data],
-  );
 
   if (loading) {
     return (
@@ -189,6 +173,7 @@ const MatchDetails = () => {
 
       <section className="fp-event-layout">
         <div className="fp-event-main">
+          {/* Módulo de Probabilidades algorítmicas */}
           <SectionCard title="Probabilidades API" status={moduleStatusToBadge(probabilities.status)} helper={moduleMessage(probabilities.status)}>
             {probabilities.status === 'success' && (
               <div className="fp-market-groups">
@@ -226,6 +211,7 @@ const MatchDetails = () => {
             )}
           </SectionCard>
 
+          {/* Módulo de Cuotas de Mercado (Odds) */}
           <SectionCard title="Cuotas Reales (Odds)" status={moduleStatusToBadge(odds.status)}>
             {odds.status === 'success' && (
               <div className="fp-market-groups">
@@ -253,24 +239,6 @@ const MatchDetails = () => {
         </div>
 
         <aside className="fp-event-side">
-          <SectionCard title="Value Bets" status={moduleStatusToBadge(valueBets.status)}>
-            {valueBets.status === 'success' && topValueBet ? (
-              <div className="fp-value-pick">
-                <MatchRow label="Selección" value={topValueBet.bet} compact />
-                <MatchRow label="Stake" value={`${topValueBet.suggestedStake}%`} compact />
-              </div>
-            ) : <p className="fp-module-empty">Sin picks de valor</p>}
-          </SectionCard>
-
-          <GlassCard className="fp-indicators">
-            <h3>Indicadores</h3>
-            <div className="fp-indicator-list">
-              <Badge status={indicatorStatus(fixture.hasOdds)} label="Cuotas" />
-              <Badge status={indicatorStatus(fixture.hasPremiumOdds)} label="Premium" />
-              <Badge status={fixture.predictable ? 'available' : 'empty'} label="Predicción" />
-            </div>
-          </GlassCard>
-
           <GlassCard>
             <h3>Resumen</h3>
             <div className="fp-context-grid">

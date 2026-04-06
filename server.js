@@ -7,8 +7,6 @@ import { fileURLToPath } from 'node:url';
 import leaguesHandler from './api/leagues.js';
 import fixturesHandler from './api/fixtures.js';
 import predictionsHandler from './api/predictions.js';
-import valueBetsHandler from './api/value-bets.js';
-import oddsHandler from './api/odds.js';
 import usageHandler from './api/usage.js';
 
 const app = express();
@@ -26,8 +24,6 @@ app.get('/health', (_req, res) => {
 app.all('/api/leagues', runHandler(leaguesHandler));
 app.all('/api/fixtures', runHandler(fixturesHandler));
 app.all('/api/predictions', runHandler(predictionsHandler));
-app.all('/api/value-bets', runHandler(valueBetsHandler));
-app.all('/api/odds', runHandler(oddsHandler));
 app.all('/api/usage', runHandler(usageHandler));
 
 app.use(express.static(distDir));
