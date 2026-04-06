@@ -48,8 +48,6 @@ export const normalizeFixture = (response) => {
     stateCode: fixture.state?.data?.state ?? fixture.state?.state ?? null,
     predictable: fixture.metadata?.predictable ?? null,
     metadata: fixture.metadata ?? null,
-    hasOdds: fixture.has_odds ?? null,
-    hasPremiumOdds: fixture.has_premium_odds ?? null,
     placeholder: fixture.placeholder ?? null,
     venue: fixture.venue?.data?.name ?? fixture.venue?.name ?? null,
     venueCity: fixture.venue?.data?.city_name ?? fixture.venue?.city_name ?? null,

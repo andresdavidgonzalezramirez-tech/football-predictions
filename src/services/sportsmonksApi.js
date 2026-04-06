@@ -118,30 +118,6 @@ export const getProbabilitiesByFixture = async (fixtureId) => fetchWithCache({
   fallbackMessage: `No se pudieron cargar probabilities para fixture ${fixtureId}.`,
 });
 
-export const getValueBetsByFixture = async (fixtureId) => fetchWithCache({
-  cacheKey: `valuebets_${fixtureId}`,
-  endpoint: '/value-bets',
-  params: { fixtureId },
-  ttl: 90_000,
-  fallbackMessage: `No se pudieron cargar value bets para fixture ${fixtureId}.`,
-});
-
-export const getGlobalValueBets = async (params = {}) => fetchWithCache({
-  cacheKey: `valuebets_global_${JSON.stringify(params)}`,
-  endpoint: '/value-bets',
-  params,
-  ttl: 60_000,
-  fallbackMessage: 'No se pudieron cargar value bets globales.',
-});
-
-export const getOddsByFixture = async (fixtureId, bookmakerId = 2) => fetchWithCache({
-  cacheKey: `odds_${fixtureId}_${bookmakerId}`,
-  endpoint: '/odds',
-  params: { fixtureId, bookmakerId },
-  ttl: 120_000,
-  fallbackMessage: `No se pudieron cargar odds para fixture ${fixtureId}.`,
-});
-
 export const getUsage = async () => fetchWithCache({
   cacheKey: 'usage_snapshot',
   endpoint: '/usage',
