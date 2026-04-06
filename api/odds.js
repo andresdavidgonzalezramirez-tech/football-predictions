@@ -1,7 +1,7 @@
 /**
  * Vercel Serverless Function - Odds proxy (kept semantically separate)
  */
-import { handleRequestGuards, forwardSportmonks } from './_shared.js';
+import { handleRequestGuards, forwardSportmonks, sendApiError } from './_shared.js';
 
 export default async function handler(req, res) {
   if (!handleRequestGuards(req, res)) {
@@ -10,7 +10,11 @@ export default async function handler(req, res) {
 
   const { fixtureId, bookmakerId = 2 } = req.query;
   if (!fixtureId) {
-    return res.status(400).json({ error: 'Fixture ID is required', code: 'MISSING_FIXTURE_ID' });
+    return sendApiError(res, {
+      status: 400,
+      code: 'MISSING_FIXTURE_ID',
+      message: 'Fixture ID is required',
+    });
   }
 
   try {
@@ -22,10 +26,11 @@ export default async function handler(req, res) {
       },
     });
   } catch (error) {
-    return res.status(500).json({
-      error: 'Failed to fetch odds',
+    return sendApiError(res, {
+      status: 500,
       code: 'ODDS_PROXY_ERROR',
-      message: error.message,
+      message: 'Failed to fetch odds',
+      context: { detail: error.message, fixtureId, bookmakerId },
     });
   }
 }

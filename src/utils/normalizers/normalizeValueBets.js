@@ -1,7 +1,14 @@
-import { calculateEdgePercent } from '../oddsCalculator';
+const calculateEdgePercent = (marketOdd, fairOdd) => {
+  const market = Number(marketOdd);
+  const fair = Number(fairOdd);
+  if (!Number.isFinite(market) || !Number.isFinite(fair) || fair <= 0) return null;
+  const edge = ((market - fair) / fair) * 100;
+  return Number(edge.toFixed(2));
+};
 
 export const normalizeValueBets = (response) => {
-  const items = response?.data ?? [];
+  const raw = response?.data ?? response ?? [];
+  const items = Array.isArray(raw) ? raw : raw?.data ?? [];
 
   return items.map((item) => {
     const predictions = item.predictions ?? {};
