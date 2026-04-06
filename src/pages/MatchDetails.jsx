@@ -169,20 +169,20 @@ const MatchDetails = () => {
         <div className="fp-teams-hero">
           <div className="fp-team-block">
             <img src={fixture.homeLogo || '/vite.svg'} alt="Home" />
-            <h1>{fixture.participants?.home?.name || 'Local'}</h1>
+            <h1 translate="no">{fixture.participants?.home?.name || 'Local'}</h1>
           </div>
           <div className="fp-vs">VS</div>
           <div className="fp-team-block">
             <img src={fixture.awayLogo || '/vite.svg'} alt="Away" />
-            <h1>{fixture.participants?.away?.name || 'Visitante'}</h1>
+            <h1 translate="no">{fixture.participants?.away?.name || 'Visitante'}</h1>
           </div>
         </div>
         <div className="fp-scoreboard-main">
           <div className="fp-score-pill">{formatStateLabel(fixture.state)}</div>
           <div className="fp-score-block">
-            <span>{fixture.participants?.home?.name}</span>
+            <span translate="no">{fixture.participants?.home?.name}</span>
             <strong>— : —</strong>
-            <span>{fixture.participants?.away?.name}</span>
+            <span translate="no">{fixture.participants?.away?.name}</span>
           </div>
         </div>
       </GlassCard>
@@ -231,11 +231,13 @@ const MatchDetails = () => {
               <div className="fp-market-groups">
                 {Object.entries(groupedOdds).map(([marketName, marketOdds]) => (
                   <div key={marketName} className="fp-market-card">
-                    <div className="fp-market-head"><strong>{resolveOddsMarketTitle(marketName)}</strong></div>
+                    <div className="fp-market-head">
+                      <strong translate="no">{resolveOddsMarketTitle(marketName)}</strong>
+                    </div>
                     <div className="fp-market-options">
                       {marketOdds.map((odd) => (
                         <button key={odd.id} className="fp-odd-pill">
-                          <span>{resolveOddsSelectionLabel(odd, {
+                          <span translate="no">{resolveOddsSelectionLabel(odd, {
                             homeTeam: fixture.participants?.home?.name,
                             awayTeam: fixture.participants?.away?.name,
                           })}</span>
