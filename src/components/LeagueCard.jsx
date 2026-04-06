@@ -4,7 +4,7 @@ import Badge from './Badge';
 import { getProbabilitiesByFixture } from '../services/sportsmonksApi';
 import normalizeProbabilities from '../utils/normalizers/normalizeProbabilities';
 import normalizeFixture from '../utils/normalizers/normalizeFixture';
-import { formatProbabilityValue, translateMarketOption } from '../utils/marketTranslations';
+import { formatProbabilityValue } from '../utils/marketTranslations';
 import './LeagueCard.css';
 
 const LeagueCard = ({ league }) => {
@@ -34,9 +34,8 @@ const LeagueCard = ({ league }) => {
       const nextMarkets = {};
       const nextStatuses = {};
 
-      // Limitamos a los primeros 6 para optimizar llamadas a la API
       await Promise.all(
-        fixtures.slice(0, 6).map(async (fixture) => {
+        fixtures.map(async (fixture) => {
           try {
             const response = await getProbabilitiesByFixture(fixture.fixtureId);
             const normalized = normalizeProbabilities(response);
@@ -67,7 +66,7 @@ const LeagueCard = ({ league }) => {
 
     return market.options.slice(0, 3).map((option) => (
       <span key={`${fixtureId}-${option.key}`} className="fixture-market-pill">
-        {translateMarketOption(option.key, market)}: {formatProbabilityValue(option.value)}
+        {option.label}: {formatProbabilityValue(option.value)}
       </span>
     ));
   };

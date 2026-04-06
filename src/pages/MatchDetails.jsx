@@ -15,10 +15,8 @@ import normalizeProbabilities from '../utils/normalizers/normalizeProbabilities'
 import normalizeValueBets from '../utils/normalizers/normalizeValueBets';
 import {
   formatProbabilityValue,
-  translateMarketTitle,
   translateOddsLabel,
-  translateMarketOption,
-  classifyMarketCategory,
+  translateMarketTitle,
 } from '../utils/marketTranslations';
 import './MatchDetails.css';
 
@@ -105,7 +103,7 @@ const MatchDetails = () => {
   const groupedMarkets = useMemo(() => {
     const groups = {};
     (probabilities.data ?? []).forEach((market) => {
-      const group = classifyMarketCategory(market);
+      const group = market.category || 'Otros mercados';
       groups[group] = groups[group] ?? [];
       groups[group].push(market);
     });
@@ -208,12 +206,12 @@ const MatchDetails = () => {
                   {(groupedMarkets[selectedMarketCategory] ?? []).map((item) => (
                     <div key={item.id} className="fp-market-card">
                       <div className="fp-market-head">
-                        <strong>{translateMarketTitle(item)}</strong>
+                        <strong>{item.displayName || translateMarketTitle(item)}</strong>
                       </div>
                       <div className="fp-market-options">
                         {item.options.map((opt) => (
-                          <button key={opt.key} className="fp-odd-pill">
-                            <span>{translateMarketOption(opt.key, item)}</span>
+                          <button key={`${item.id}-${opt.rawKey || opt.key}`} className="fp-odd-pill">
+                            <span>{opt.label}</span>
                             <strong>{formatProbabilityValue(opt.value)}</strong>
                           </button>
                         ))}
@@ -232,7 +230,7 @@ const MatchDetails = () => {
                   <div key={marketName} className="fp-market-card">
                     <div className="fp-market-head"><strong>{translateMarketTitle({ marketName })}</strong></div>
                     <div className="fp-market-options">
-                      {marketOdds.slice(0, 9).map((odd) => (
+                      {marketOdds.map((odd) => (
                         <button key={odd.id} className="fp-odd-pill">
                           <span>{translateOddsLabel(
                             odd.label || odd.original_label,

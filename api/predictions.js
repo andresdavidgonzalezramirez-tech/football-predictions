@@ -2,7 +2,12 @@
  * Vercel Serverless Function - Predictions probabilities proxy
  * Supports by fixture and generic list endpoint.
  */
-import { handleRequestGuards, forwardSportmonks, sendApiError } from './_shared.js';
+import {
+  handleRequestGuards,
+  forwardSportmonks,
+  forwardSportmonksPaginated,
+  sendApiError,
+} from './_shared.js';
 
 export default async function handler(req, res) {
   if (!handleRequestGuards(req, res)) {
@@ -15,6 +20,18 @@ export default async function handler(req, res) {
     : '/predictions/probabilities';
 
   try {
+    if (fixtureId) {
+      return await forwardSportmonksPaginated({
+        res,
+        path,
+        query: restQuery,
+        defaultParams: {
+          include: 'type;fixture',
+          per_page: 50,
+        },
+      });
+    }
+
     return await forwardSportmonks({
       res,
       path,
