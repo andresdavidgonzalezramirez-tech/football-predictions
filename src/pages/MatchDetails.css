@@ -1,3 +1,4 @@
+/* Contenedor Principal */
 .match-screen {
   min-height: 100vh;
   padding: 24px;
@@ -7,6 +8,7 @@
   gap: 20px;
 }
 
+/* Navegación */
 .fp-back-link {
   width: fit-content;
   color: #d9e8ff;
@@ -14,6 +16,8 @@
   border-radius: 999px;
   border: 1px solid rgba(177, 216, 255, 0.28);
   transition: all 0.2s ease;
+  text-decoration: none;
+  font-size: 0.9rem;
 }
 
 .fp-back-link:hover {
@@ -21,6 +25,7 @@
   background: rgba(153, 197, 255, 0.12);
 }
 
+/* Tarjetas y Efectos Glass */
 .fp-glass-card {
   border: 1px solid rgba(142, 172, 255, 0.22);
   background: linear-gradient(135deg, rgba(19, 30, 54, 0.82), rgba(9, 15, 30, 0.72));
@@ -34,35 +39,9 @@
   box-shadow: 0 0 0 1px rgba(116, 163, 255, 0.22), 0 0 40px rgba(84, 133, 255, 0.15);
 }
 
+/* Hero y Scoreboard */
 .fp-hero {
   padding: 28px;
-}
-
-.fp-scoreboard {
-  border-color: rgba(169, 200, 255, 0.35);
-}
-
-.fp-scoreboard-main {
-  display: grid;
-  gap: 10px;
-}
-
-.fp-score-pill {
-  width: fit-content;
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: rgba(89, 135, 255, 0.22);
-  color: #d9e8ff;
-  font-weight: 700;
-}
-
-.fp-score-block {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 14px;
-  font-weight: 700;
-  font-size: 1.1rem;
 }
 
 .fp-hero-top {
@@ -107,6 +86,35 @@
   color: #9fbeff;
 }
 
+.fp-scoreboard {
+  border-color: rgba(169, 200, 255, 0.35);
+}
+
+.fp-scoreboard-main {
+  display: grid;
+  gap: 10px;
+}
+
+.fp-score-pill {
+  width: fit-content;
+  margin: 0 auto;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(89, 135, 255, 0.22);
+  color: #d9e8ff;
+  font-weight: 700;
+}
+
+.fp-score-block {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+/* Grillas de Información y Módulos */
 .fp-info-grid,
 .fp-modules-grid {
   display: grid;
@@ -114,17 +122,7 @@
   gap: 12px;
 }
 
-.fp-indicators h3 {
-  margin-bottom: 12px;
-  font-size: 1.15rem;
-}
-
-.fp-indicator-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
+/* Badges de Estado */
 .fp-badge {
   display: inline-flex;
   gap: 6px;
@@ -154,41 +152,7 @@
   color: #d8e2fb;
 }
 
-.fp-section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.fp-section-card.status-available {
-  border-color: rgba(93, 222, 157, 0.35);
-}
-
-.fp-section-card.status-empty {
-  border-color: rgba(181, 200, 239, 0.25);
-}
-
-.fp-section-card.status-restricted {
-  border-color: rgba(255, 119, 119, 0.35);
-}
-
-.fp-section-card.status-error {
-  border-color: rgba(255, 119, 119, 0.35);
-  background: linear-gradient(135deg, rgba(58, 19, 26, 0.78), rgba(20, 12, 18, 0.74));
-}
-
-.fp-section-helper {
-  font-size: 0.94rem;
-  color: #bfd1f5;
-  margin-bottom: 10px;
-}
-
-.fp-list {
-  display: grid;
-  gap: 8px;
-}
-
+/* Filas de Datos (MatchRow) */
 .fp-match-row {
   display: flex;
   justify-content: space-between;
@@ -214,69 +178,20 @@
   text-align: right;
 }
 
-.fp-module-empty {
-  color: #d2dcf7;
-  margin: 0;
-}
-
-.fp-summary-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.fp-context-grid {
-  margin-top: 10px;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.fp-team-panels {
-  margin-top: 10px;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.fp-team-panel {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  padding: 12px;
-  border-radius: 12px;
-  background: rgba(18, 27, 48, 0.7);
-  border: 1px solid rgba(139, 170, 235, 0.22);
-}
-
-.fp-team-panel img {
-  width: 64px;
-  height: 64px;
-  border-radius: 999px;
-  border: 1px solid rgba(162, 194, 255, 0.4);
-}
-
-.fp-team-panel h4 {
-  margin-bottom: 4px;
-  font-size: 1.05rem;
-}
-
-.fp-team-panel p {
-  font-size: 0.86rem;
-  color: #c0d4fb;
-}
-
+/* Secciones Premium / Especiales */
 .fp-analysis-locked {
   border: 1px dashed rgba(160, 190, 255, 0.45);
   background: linear-gradient(135deg, rgba(30, 44, 78, 0.76), rgba(16, 23, 43, 0.72));
+  padding: 20px;
+  text-align: center;
 }
 
-.fp-analysis-locked p {
-  margin-top: 8px;
-  color: #d4e3ff;
+.fp-section-card.status-error {
+  border-color: rgba(255, 119, 119, 0.35);
+  background: linear-gradient(135deg, rgba(58, 19, 26, 0.78), rgba(20, 12, 18, 0.74));
 }
 
+/* Skeletons de Carga */
 .fp-detail-skeleton {
   border-radius: 16px;
   animation: pulse 1.2s infinite ease-in-out;
@@ -293,14 +208,25 @@
   100% { opacity: 0.5; }
 }
 
+/* Responsividad */
 @media (max-width: 960px) {
   .fp-info-grid,
   .fp-modules-grid {
     grid-template-columns: 1fr;
   }
 
+  .fp-teams-hero {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .fp-vs {
+    font-size: 1.5rem;
+    margin: 10px 0;
+  }
+
   .fp-team-block h1 {
-    font-size: 1.1rem;
+    font-size: 1.4rem;
   }
 
   .fp-team-block img {
@@ -308,9 +234,7 @@
     height: 84px;
   }
 
-  .fp-context-grid,
-  .fp-team-panels,
-  .fp-summary-grid {
+  .fp-summary-grid, .fp-context-grid {
     grid-template-columns: 1fr;
   }
 }

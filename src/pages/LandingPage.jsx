@@ -70,6 +70,7 @@ const LandingPage = () => {
 
   const predictableFixtures = leagues.reduce((sum, league) => {
     const fixtures = league?.upcoming?.data ?? league?.upcoming ?? [];
+    // Comprobación robusta en ambas ubicaciones posibles del flag 'predictable'
     const predictableCount = fixtures.filter((fixture) => 
       fixture?.metadata?.predictable === true || fixture?.predictable === true
     ).length;

@@ -20,6 +20,31 @@ const toModuleState = (status, data = null, message = '') => ({ status, data, me
 const moduleStatusToBadge = (status) => (status === 'success' ? 'available' : status);
 const TEAM_INFO_FALLBACK = 'Dato no disponible';
 
+const OPTION_LABELS = {
+  yes: 'Sí',
+  no: 'No',
+  equal: 'Igual',
+  home: 'Local',
+  away: 'Visitante',
+  draw: 'Empate',
+  over: 'Más',
+  under: 'Menos',
+  home_yes: 'Local Sí',
+  away_yes: 'Visitante Sí',
+};
+
+const humanizeOption = (key) => OPTION_LABELS[key] || key.replaceAll('_', ' ');
+
+const classifyMarketGroup = (code = '', name = '') => {
+  const v = `${code} ${name}`.toLowerCase();
+  if (v.includes('corner')) return 'Córners';
+  if (v.includes('home-over-under') || v.includes('home over/under')) return 'Local';
+  if (v.includes('away-over-under') || v.includes('away over/under')) return 'Visitante';
+  if (v.includes('over-under') || v.includes('total')) return 'Totales';
+  if (v.includes('draw') || v.includes('result') || v.includes('double-chance')) return 'Resultado';
+  return 'Especiales';
+};
+
 const getErrorState = (error) => {
   if (error.kind === 'plan_restricted') return toModuleState('restricted', null, 'No incluido en tu plan');
   if (error.kind === 'not_found') return toModuleState('empty', null, 'No hay datos para este partido');
@@ -69,25 +94,21 @@ const MatchDetails = () => {
       setFatalError('');
 
       try {
-        // 1. Carga del Fixture (Principal)
         const fixtureResponse = await getFixtureById(fixtureId);
         setFixture(normalizeFixture(fixtureResponse));
 
-        // 2. Carga de Probabilidades
         try {
           const res = await getProbabilitiesByFixture(fixtureId);
           const norm = normalizeProbabilities(res);
           setProbabilities(toModuleState(norm.items.length ? 'success' : 'empty', norm.items));
         } catch (e) { setProbabilities(getErrorState(e)); }
 
-        // 3. Carga de Value Bets
         try {
           const res = await getValueBetsByFixture(fixtureId);
           const norm = normalizeValueBets(res);
           setValueBets(toModuleState(norm.length ? 'success' : 'empty', norm));
         } catch (e) { setValueBets(getErrorState(e)); }
 
-        // 4. Carga de Odds
         try {
           const res = await getOddsByFixture(fixtureId);
           const items = res?.data ?? [];
@@ -108,6 +129,26 @@ const MatchDetails = () => {
     () => (valueBets.data ?? []).find((item) => item.isValuePick) ?? null,
     [valueBets.data],
   );
+
+  const groupedMarkets = useMemo(() => {
+    const groups = {};
+    (probabilities.data ?? []).forEach((market) => {
+      const group = classifyMarketGroup(market.marketCode, market.marketName);
+      groups[group] = groups[group] ?? [];
+      groups[group].push(market);
+    });
+    return groups;
+  }, [probabilities.data]);
+
+  const groupedOdds = useMemo(() => {
+    const groups = {};
+    (odds.data ?? []).forEach((odd) => {
+      const key = odd.market?.name || odd.market_description || `Mercado ${odd.market_id ?? ''}`;
+      groups[key] = groups[key] ?? [];
+      groups[key].push(odd);
+    });
+    return groups;
+  }, [odds.data]);
 
   if (loading) {
     return (
@@ -185,46 +226,60 @@ const MatchDetails = () => {
       </GlassCard>
 
       <section className="fp-modules-grid">
-        {/* Módulo Probabilidades */}
         <SectionCard title="Probabilidades" status={moduleStatusToBadge(probabilities.status)} helper={moduleMessage(probabilities.status)}>
           {probabilities.status === 'success' && (
-            <div className="fp-list">
-              {probabilities.data.slice(0, 6).map((item) => (
-                <MatchRow
-                  key={`${item.typeId}-${item.marketCode}`}
-                  label={item.marketName || 'Mercado'}
-                  value={item.probability ? `${item.probability}%` : 'Dato base'}
-                  compact
-                />
+            <div className="fp-market-groups">
+              {Object.entries(groupedMarkets).map(([group, markets]) => (
+                <div key={group} className="fp-market-group">
+                  <h4>{group}</h4>
+                  {markets.map((item) => (
+                    <div key={item.id} className="fp-market-card">
+                      <div className="fp-market-head">
+                        <strong>{item.marketName}</strong>
+                      </div>
+                      <div className="fp-market-options">
+                        {item.options.map((opt) => (
+                          <div key={opt.key} className="fp-odd-pill">
+                            <span>{humanizeOption(opt.key)}</span>
+                            <strong>{opt.value}%</strong>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               ))}
             </div>
           )}
         </SectionCard>
 
-        {/* Módulo Value Bets */}
         <SectionCard title="Value Bets" status={moduleStatusToBadge(valueBets.status)} helper={moduleMessage(valueBets.status)}>
           {valueBets.status === 'success' && (
             topValueBet ? (
               <div className="fp-value-pick">
-                <MatchRow label="Selección" value={topValueBet.bet || 'Pick'} compact />
-                <MatchRow label="Bookmaker" value={topValueBet.bookmaker || 'Oficial'} compact />
-                <MatchRow label="Stake sugerido" value={topValueBet.suggestedStake ? `${topValueBet.suggestedStake}%` : 'Modelo'} compact />
+                <MatchRow label="Selección" value={topValueBet.bet} compact />
+                <MatchRow label="Bookmaker" value={topValueBet.bookmaker} compact />
+                <MatchRow label="Stake" value={`${topValueBet.suggestedStake}%`} compact />
               </div>
-            ) : <p className="fp-module-empty">Sin picks para este partido</p>
+            ) : <p className="fp-module-empty">Sin picks disponibles</p>
           )}
         </SectionCard>
 
-        {/* Módulo Odds */}
         <SectionCard title="Odds" status={moduleStatusToBadge(odds.status)} helper={moduleMessage(odds.status)}>
           {odds.status === 'success' && (
-            <div className="fp-list">
-              {odds.data.slice(0, 5).map((odd) => (
-                <MatchRow
-                  key={odd.id}
-                  label={`${odd.market?.name || 'Mercado'} · ${odd.label || 'Pick'}`}
-                  value={odd.value || 'N/A'}
-                  compact
-                />
+            <div className="fp-market-groups">
+              {Object.entries(groupedOdds).map(([marketName, marketOdds]) => (
+                <div key={marketName} className="fp-market-card">
+                  <div className="fp-market-head"><strong>{marketName}</strong></div>
+                  <div className="fp-market-options">
+                    {marketOdds.slice(0, 6).map((odd) => (
+                      <div key={odd.id} className="fp-odd-pill">
+                        <span>{odd.label}</span>
+                        <strong>{odd.value}</strong>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           )}
@@ -235,8 +290,8 @@ const MatchDetails = () => {
         <h3>Resumen Final</h3>
         <div className="fp-summary-grid">
           <MatchRow label="Ciudad" value={fixture.venueCity || 'Por confirmar'} compact />
-          <MatchRow label="Fixture ID" value={fixture.fixtureId || '—'} compact />
-          <MatchRow label="Estado Original" value={fixture.state || 'Pendiente'} compact />
+          <MatchRow label="Fixture ID" value={fixture.fixtureId} compact />
+          <MatchRow label="Estado Original" value={fixture.state} compact />
         </div>
       </GlassCard>
     </main>

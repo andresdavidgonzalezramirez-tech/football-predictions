@@ -140,6 +140,22 @@
   font-size: 0.8rem;
 }
 
+/* Estilos de Mercado (Nuevos de la rama codex) */
+.fixture-market-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.fixture-market-pill {
+  border: 1px solid rgba(78, 150, 255, 0.42);
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 0.77rem;
+  color: #d9e9ff;
+  background: rgba(25, 56, 109, 0.5);
+}
+
 .fixture-badges {
   display: flex;
   flex-direction: column;
@@ -147,6 +163,7 @@
   gap: 8px;
 }
 
+/* Responsividad */
 @media (max-width: 820px) {
   .fixture-item {
     grid-template-columns: 1fr;
