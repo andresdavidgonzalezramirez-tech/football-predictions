@@ -1,61 +1,43 @@
-/* Modern fonts import */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap');
+* {
+  box-sizing: border-box;
+}
 
-/* Tailwind directives */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+html {
+  scroll-behavior: smooth;
+}
 
-/* Base styles */
-@layer base {
-  * {
-    box-sizing: border-box;
-  }
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: #070d18;
+  color: #e6ecff;
+}
 
-  html {
-    scroll-behavior: smooth;
-  }
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  margin: 0;
+}
 
-  body {
-    margin: 0;
-    padding: 0;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    background-color: #f9fafb;
-  }
+a {
+  color: inherit;
+  text-decoration: none;
+}
 
-  h1, h2, h3, h4, h5, h6, p {
-    margin: 0;
-    padding: 0;
-  }
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
 
-  a {
-    color: inherit;
-    text-decoration: none;
-  }
-
-  button {
-    font-family: inherit;
-    cursor: pointer;
-  }
-
-  /* Custom scrollbar */
-  ::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: #f1f5f9;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 4px;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
-  }
+*:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
 }
