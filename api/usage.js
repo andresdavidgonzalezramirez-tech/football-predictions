@@ -1,7 +1,12 @@
 /**
  * Vercel Serverless Function - API usage proxy
  */
-import { handleRequestGuards, forwardSportmonks, SPORTMONKS_CORE_BASE } from './_shared.js';
+import {
+  handleRequestGuards,
+  forwardSportmonks,
+  SPORTMONKS_CORE_BASE,
+  sendApiError,
+} from './_shared.js';
 
 export default async function handler(req, res) {
   if (!handleRequestGuards(req, res)) {
@@ -16,10 +21,11 @@ export default async function handler(req, res) {
       baseUrl: SPORTMONKS_CORE_BASE,
     });
   } catch (error) {
-    return res.status(500).json({
-      error: 'Failed to fetch usage',
+    return sendApiError(res, {
+      status: 500,
       code: 'USAGE_PROXY_ERROR',
-      message: error.message,
+      message: 'Failed to fetch usage',
+      context: { detail: error.message },
     });
   }
 }
