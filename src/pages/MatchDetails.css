@@ -1,4 +1,4 @@
-/* Contenedor Principal con degradado profundo */
+/* Contenedor Principal */
 .match-screen {
   min-height: 100vh;
   padding: 24px;
@@ -123,6 +123,31 @@
   font-size: 1.1rem;
 }
 
+/* Pestañas de Mercados */
+.fp-market-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.fp-market-tab {
+  border: 1px solid rgba(106, 155, 232, 0.35);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.78rem;
+  background: rgba(17, 29, 53, 0.7);
+  color: #b6ccef;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.fp-market-tab.active {
+  background: rgba(39, 98, 191, 0.7);
+  color: #eff6ff;
+  border-color: rgba(128, 182, 255, 0.6);
+}
+
 /* Mercados y Cuotas (Sportsbook Style) */
 .fp-market-groups {
   display: grid;
@@ -134,6 +159,11 @@
   border-radius: 12px;
   padding: 10px;
   background: rgba(12, 18, 33, 0.62);
+}
+
+.fp-market-group h4 {
+  margin-bottom: 8px;
+  color: #d7e7ff;
 }
 
 .fp-market-card {
