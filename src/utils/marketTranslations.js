@@ -87,9 +87,9 @@ const MARKET_TRANSLATION_RULES = [
   },
   {
     key: 'corners',
-    title: 'Córners',
-    category: 'Córners',
-    patterns: ['corners', 'corner', 'esquinas'],
+    title: 'Esquinas',
+    category: 'Esquinas',
+    patterns: ['corners', 'corner', 'esquinas', 'tiros de esquina'],
   },
 ];
 
@@ -144,7 +144,7 @@ const buildDelimitedLabel = (tokens, separator = ' / ') => tokens
   .replace(/\s+/g, ' ')
   .trim();
 
-const isOverUnderRule = (rule) => ['over_under', 'home_over_under', 'away_over_under'].includes(rule?.key);
+const isOverUnderRule = (rule) => ['over_under', 'home_over_under', 'away_over_under', 'corners'].includes(rule?.key);
 
 const normalizeOptionRaw = (value) => String(value ?? '').trim().toLowerCase();
 
