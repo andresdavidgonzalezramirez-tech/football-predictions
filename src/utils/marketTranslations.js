@@ -69,8 +69,8 @@ const MARKET_TRANSLATION_RULES = [
   },
   {
     key: 'home_over_under',
-    title: 'Inicio Más / Menos',
-    category: 'Inicio Más/Menos',
+    title: 'Equipo local Más / Menos',
+    category: 'Equipo local Más/Menos',
     patterns: ['home-over-under', 'home over/under', 'home under', 'inicio más/menos'],
   },
   {
@@ -87,8 +87,8 @@ const MARKET_TRANSLATION_RULES = [
   },
   {
     key: 'over_under',
-    title: 'Más / Menos',
-    category: 'Más/Menos',
+    title: 'Posibilidad de gol',
+    category: 'Posibilidad de gol',
     patterns: ['over-under', 'over/under', 'total', 'más/menos'],
   },
 ];
@@ -149,7 +149,7 @@ const tokenizeOption = (rawOption) => String(rawOption ?? '')
   .split(/[_-]+/)
   .filter(Boolean);
 
-const translateToken = (token) => BASE_OPTION_LABELS[token] ?? sentenceCase(token);
+const translateToken = (token) => (/^empatiz/.test(token) ? 'Empate' : (BASE_OPTION_LABELS[token] ?? sentenceCase(token)));
 
 const buildDelimitedLabel = (tokens, separator = ' / ') => tokens
   .map(translateToken)
