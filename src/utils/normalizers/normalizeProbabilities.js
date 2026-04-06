@@ -37,7 +37,13 @@ const toMarketIdentity = (marketType = {}) => ({
 
 export const normalizeProbabilities = (response) => {
   const raw = response?.data ?? response ?? [];
-  const items = Array.isArray(raw) ? raw : raw?.data ?? [];
+  const items = Array.isArray(raw)
+    ? raw
+    : Array.isArray(raw?.data)
+      ? raw.data
+      : Array.isArray(raw?.predictions)
+        ? raw.predictions
+        : [];
   const byMarket = {};
 
   items.forEach((item) => {
