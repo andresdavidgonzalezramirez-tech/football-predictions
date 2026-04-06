@@ -6,3 +6,4 @@ export { default as SectionCard } from './SectionCard';
 export { default as ValueAlertCard } from './ValueAlertCard';
 export { default as GeneralMarketRow } from './GeneralMarketRow';
 export { default as ValueEmptyState } from './ValueEmptyState';
+export { default as DataSourceBadge } from './DataSourceBadge';

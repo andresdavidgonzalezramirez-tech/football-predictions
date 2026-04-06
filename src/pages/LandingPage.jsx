@@ -26,6 +26,8 @@ const LandingPage = () => {
     run();
   }, []);
 
+  // --- Manejo de Estados de Carga y Error ---
+
   if (loading) {
     return (
       <main className="landing-page">
@@ -35,16 +37,18 @@ const LandingPage = () => {
       </main>
     );
   }
+
   if (error) {
     return (
       <main className="landing-page">
-        <GlassCard>
+        < GlassCard>
           <h2>Error al cargar ligas</h2>
           <p>{error}</p>
         </GlassCard>
       </main>
     );
   }
+
   if (!leagues.length) {
     return (
       <main className="landing-page">
@@ -56,27 +60,38 @@ const LandingPage = () => {
     );
   }
 
+  // --- Cálculo de KPIs (Métricas) ---
+
   const totalFixtures = leagues.reduce((sum, league) => (
     sum + ((league?.upcoming?.data ?? league?.upcoming ?? []).length)
   ), 0);
+
   const leaguesWithCountry = leagues.filter((league) => league?.country?.name).length;
+
   const predictableFixtures = leagues.reduce((sum, league) => {
     const fixtures = league?.upcoming?.data ?? league?.upcoming ?? [];
-    const predictableCount = fixtures.filter((fixture) => fixture?.metadata?.predictable === true).length;
+    // Comprobación robusta en ambas ubicaciones posibles del flag 'predictable'
+    const predictableCount = fixtures.filter((fixture) => 
+      fixture?.metadata?.predictable === true || fixture?.predictable === true
+    ).length;
     return sum + predictableCount;
   }, 0);
+
+  // --- Renderizado Principal ---
 
   return (
     <main className="landing-page">
       <header className="page-header fp-glow">
         <h1>Football Predictions</h1>
         <p>Vista limpia de ligas, partidos e indicadores clave.</p>
+        
         <div className="landing-kpis">
-          <span>Ligas: {leagues.length}</span>
-          <span>Partidos listados: {totalFixtures}</span>
-          <span>Ligas con país: {leaguesWithCountry}</span>
-          <span>Fixtures predictables: {predictableFixtures}</span>
+          <span>Ligas: <strong>{leagues.length}</strong></span>
+          <span>Partidos listados: <strong>{totalFixtures}</strong></span>
+          <span>Ligas con país: <strong>{leaguesWithCountry}</strong></span>
+          <span>Fixtures predictables: <strong>{predictableFixtures}</strong></span>
         </div>
+        
         <Link to="/market" className="retry-button">Abrir Market Overview</Link>
       </header>
 
