@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getLeaguesWithUpcoming } from '../services/sportsmonksApi';
+import GlassCard from '../components/GlassCard';
 import LeagueCard from '../components/LeagueCard';
 import './LandingPage.css';
 
@@ -25,15 +26,71 @@ const LandingPage = () => {
     run();
   }, []);
 
-  if (loading) return <div className="landing-page"><p>Loading leagues…</p></div>;
-  if (error) return <div className="landing-page"><p>{error}</p></div>;
-  if (!leagues.length) return <div className="landing-page"><p>No hay ligas disponibles.</p></div>;
+  // --- Manejo de Estados de Carga y Error ---
+
+  if (loading) {
+    return (
+      <main className="landing-page">
+        <div className="landing-skeleton hero" />
+        <div className="landing-skeleton row" />
+        <div className="landing-skeleton row" />
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="landing-page">
+        <GlassCard>
+          <h2>Error al cargar ligas</h2>
+          <p>{error}</p>
+        </GlassCard>
+      </main>
+    );
+  }
+
+  if (!leagues.length) {
+    return (
+      <main className="landing-page">
+        <GlassCard>
+          <h2>Sin ligas disponibles</h2>
+          <p>No recibimos ligas para mostrar en este momento.</p>
+        </GlassCard>
+      </main>
+    );
+  }
+
+  // --- Cálculo de KPIs (Métricas) ---
+
+  const totalFixtures = leagues.reduce((sum, league) => (
+    sum + ((league?.upcoming?.data ?? league?.upcoming ?? []).length)
+  ), 0);
+
+  const leaguesWithCountry = leagues.filter((league) => league?.country?.name).length;
+
+  const predictableFixtures = leagues.reduce((sum, league) => {
+    const fixtures = league?.upcoming?.data ?? league?.upcoming ?? [];
+    const predictableCount = fixtures.filter((fixture) => 
+      fixture?.metadata?.predictable === true || fixture?.predictable === true
+    ).length;
+    return sum + predictableCount;
+  }, 0);
+
+  // --- Renderizado Principal ---
 
   return (
-    <div className="landing-page">
-      <header className="page-header">
+    <main className="landing-page">
+      <header className="page-header fp-glow">
         <h1>Football Predictions</h1>
-        <p>Datos oficiales Sportmonks + capa de normalización</p>
+        <p>Vista limpia de ligas, partidos e indicadores clave.</p>
+        
+        <div className="landing-kpis">
+          <span>Ligas: <strong>{leagues.length}</strong></span>
+          <span>Partidos listados: <strong>{totalFixtures}</strong></span>
+          <span>Ligas con país: <strong>{leaguesWithCountry}</strong></span>
+          <span>Fixtures predictables: <strong>{predictableFixtures}</strong></span>
+        </div>
+        
         <Link to="/market" className="retry-button">Abrir Market Overview</Link>
       </header>
 
@@ -42,7 +99,7 @@ const LandingPage = () => {
           <LeagueCard key={league.id} league={league} />
         ))}
       </div>
-    </div>
+    </main>
   );
 };
 
