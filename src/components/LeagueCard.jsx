@@ -8,10 +8,15 @@ const LeagueCard = ({ league }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const navigate = useNavigate();
 
+  // Limpieza de datos: extrae fixtures de posibles diferentes estructuras de API
   const fixturesRaw = league?.upcoming?.data ?? league?.upcoming ?? [];
   const fixtures = fixturesRaw.map(normalizeFixture).filter(Boolean);
+
+  // Lógica para el badge de predicción (corregida y limpia)
   const getPredictableBadge = (fixture) => {
-    if (fixture.predictable === true || Number(fixture.predictable) > 0) return 'available';
+    if (fixture.predictable === true || Number(fixture.predictable) > 0) {
+      return 'available';
+    }
     return 'empty';
   };
 
@@ -22,10 +27,15 @@ const LeagueCard = ({ league }) => {
         onClick={() => setIsExpanded((value) => !value)}
         role="button"
         tabIndex={0}
+        onKeyDown={(e) => e.key === 'Enter' && setIsExpanded(!isExpanded)}
       >
         <div className="league-info">
           <div className="league-logo-wrap">
-            <img src={league.image_path || '/vite.svg'} alt={league.name || 'Liga'} className="league-logo" />
+            <img 
+              src={league.image_path || '/vite.svg'} 
+              alt={league.name || 'Liga'} 
+              className="league-logo" 
+            />
           </div>
           <div className="league-details">
             <h3 className="league-name">{league.name}</h3>
@@ -47,6 +57,7 @@ const LeagueCard = ({ league }) => {
               role="button"
               tabIndex={0}
               onClick={() => navigate(`/match/${fixture.fixtureId}`)}
+              onKeyDown={(e) => e.key === 'Enter' && navigate(`/match/${fixture.fixtureId}`)}
             >
               <div className="fixture-core">
                 <div className="fixture-teams">
@@ -71,7 +82,10 @@ const LeagueCard = ({ league }) => {
                 <Badge status={fixture.hasOdds ? 'available' : 'empty'} label="Odds" />
                 <Badge status={fixture.hasPremiumOdds ? 'available' : 'restricted'} label="Premium" />
                 <Badge status={getPredictableBadge(fixture)} label="Predictible" />
-                <Badge status={fixture.placeholder ? 'empty' : 'available'} label={fixture.placeholder ? 'Placeholder API' : 'Fixture oficial'} />
+                <Badge 
+                  status={fixture.placeholder ? 'empty' : 'available'} 
+                  label={fixture.placeholder ? 'Placeholder API' : 'Fixture oficial'} 
+                />
               </div>
             </div>
           ))}
