@@ -41,7 +41,7 @@ const LandingPage = () => {
   if (error) {
     return (
       <main className="landing-page">
-        <GlassCard>
+        < GlassCard>
           <h2>Error al cargar ligas</h2>
           <p>{error}</p>
         </GlassCard>

@@ -20,7 +20,7 @@ export default async function handler(req, res) {
       path,
       query: restQuery,
       defaultParams: {
-        include: 'type;fixture;fixture.participants;fixture.league',
+        include: 'type;fixture',
       },
     });
   } catch (error) {

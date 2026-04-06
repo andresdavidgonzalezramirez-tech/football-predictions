@@ -33,7 +33,7 @@ const LeagueCard = ({ league }) => {
     return 'empty';
   };
 
-  // 3. Carga dinámica de probabilidades al expandir la liga
+  // 3. Carga dinámica de probabilidades al expandir la liga (Densificación Sportsbook)
   useEffect(() => {
     if (!isExpanded || fixtures.length === 0) return;
     let cancelled = false;
@@ -42,7 +42,7 @@ const LeagueCard = ({ league }) => {
       const nextMarkets = {};
       const nextStatuses = {};
 
-      // Cargamos solo los primeros 6 para no saturar la API (estilo densificación sportsbook)
+      // Limitamos a los primeros 6 para optimizar llamadas a la API
       await Promise.all(
         fixtures.slice(0, 6).map(async (fixture) => {
           try {
@@ -67,10 +67,10 @@ const LeagueCard = ({ league }) => {
     return () => { cancelled = true; };
   }, [isExpanded, fixtures]);
 
-  // 4. Renderizado de la previsualización de cuotas (Odds reales)
+  // 4. Renderizado de la previsualización de cuotas reales
   const marketOptionsPreview = (fixtureId) => {
     const markets = marketsByFixture[fixtureId] ?? [];
-    const market = markets[0]; // Tomamos el mercado principal
+    const market = markets[0]; 
     if (!market?.options?.length) return null;
 
     return market.options.slice(0, 3).map((option) => (
@@ -110,7 +110,7 @@ const LeagueCard = ({ league }) => {
 
       {isExpanded && (
         <div className="fixtures-list sportsbook-table">
-          {/* Cabecera de tabla estilo Sportsbook */}
+          {/* Cabecera de tabla alineada */}
           <div className="fixture-table-head">
             <span>Hora</span>
             <span>Partido</span>
@@ -130,7 +130,7 @@ const LeagueCard = ({ league }) => {
               {/* Columna 1: Hora */}
               <div className="fixture-time">{fixture.kickoff || 'Hora N/D'}</div>
 
-              {/* Columna 2: Equipos */}
+              {/* Columna 2: Equipos alineados horizontalmente */}
               <div className="fixture-teams compact">
                 <div className="team-block">
                   <img src={fixture.homeLogo || '/vite.svg'} alt="Home" />
@@ -143,7 +143,7 @@ const LeagueCard = ({ league }) => {
                 </div>
               </div>
 
-              {/* Columna 3: Mercado (Preview dinámico) */}
+              {/* Columna 3: Mercado Principal (Probabilidades Reales) */}
               <div className="fixture-market-preview">
                 {marketOptionsPreview(fixture.fixtureId) || (
                   <span className="fixture-extra">
@@ -154,7 +154,7 @@ const LeagueCard = ({ league }) => {
                 )}
               </div>
 
-              {/* Columna 4: Badges de Estado */}
+              {/* Columna 4: Indicadores de estado */}
               <div className="fixture-badges">
                 <Badge status={fixture.hasOdds ? 'available' : 'empty'} label="Cuotas" />
                 <Badge status={getPredictableBadge(fixture)} label="Predicción" />

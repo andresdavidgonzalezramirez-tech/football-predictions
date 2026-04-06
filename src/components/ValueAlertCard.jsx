@@ -1,7 +1,7 @@
-import { formatPercentage } from '../utils/oddsCalculator';
 import DataSourceBadge from './DataSourceBadge';
 
 const safe = (value) => value ?? 'No disponible';
+const formatPercentage = (value) => `${Number(value).toFixed(2)}%`;
 
 const ValueAlertCard = ({ item }) => {
   if (!item?.isValuePick) return null;
@@ -12,12 +12,12 @@ const ValueAlertCard = ({ item }) => {
 
   return (
     <article className="value-card active">
-      <div className="badge">VALUE DETECTED</div>
+      <div className="badge">VALUE BET DETECTADO</div>
       <div className="teams">{safe(item.teamsLabel)}</div>
 
       <div className="stats-grid">
         <div className="stat-item">
-          <span>Predictability</span>
+          <span>Predictibilidad</span>
           <div className="progress-bar">
             <div
               className="fill"
@@ -29,12 +29,12 @@ const ValueAlertCard = ({ item }) => {
         </div>
 
         <div className="stat-item highlight">
-          <span>Suggested Stake</span>
+          <span>Stake sugerido</span>
           <strong>{safe(item.suggestedStake)}{item.suggestedStake !== null ? '%' : ''}</strong>
         </div>
 
         <div className="stat-item">
-          <span>Edge (Ventaja)</span>
+          <span>Ventaja (edge)</span>
           <span className="text-green">
             {item.edgePercent === null ? 'No disponible' : `${item.edgePercent > 0 ? '+' : ''}${formatPercentage(item.edgePercent)}`}
           </span>

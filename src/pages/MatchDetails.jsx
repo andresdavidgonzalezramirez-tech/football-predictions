@@ -95,7 +95,7 @@ const MatchDetails = () => {
         const fixtureResponse = await getFixtureById(fixtureId);
         setFixture(normalizeFixture(fixtureResponse));
 
-        // Carga de módulos secundarios
+        // Carga de módulos independientes
         try {
           const res = await getProbabilitiesByFixture(fixtureId);
           const norm = normalizeProbabilities(res);
@@ -213,7 +213,6 @@ const MatchDetails = () => {
         
         {/* Main Content: Mercados */}
         <div className="fp-event-main">
-          
           <SectionCard title="Probabilidades" status={moduleStatusToBadge(probabilities.status)} helper={moduleMessage(probabilities.status)}>
             {probabilities.status === 'success' && (
               <div className="fp-market-groups">
