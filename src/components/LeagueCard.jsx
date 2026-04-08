@@ -1,67 +1,56 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Badge from './Badge';
-import { getProbabilitiesByFixture } from '../services/sportsmonksApi';
-import normalizeProbabilities from '../utils/normalizers/normalizeProbabilities';
-import normalizeFixture from '../utils/normalizers/normalizeFixture';
+import { getPredictionsByFixture } from '../modules/predictions/services/predictions.service';
 import { formatProbabilityValue } from '../utils/marketTranslations';
 import './LeagueCard.css';
 
 const LeagueCard = ({ league }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [marketsByFixture, setMarketsByFixture] = useState({});
-  const [marketStatusByFixture, setMarketStatusByFixture] = useState({});
+  const [predictionsByFixture, setPredictionsByFixture] = useState({});
+  const [predictionStatusByFixture, setPredictionStatusByFixture] = useState({});
   const navigate = useNavigate();
 
-  // 1. Normalización de partidos con memoización
-  const fixtures = useMemo(() => {
-    const fixturesRaw = league?.upcoming?.data ?? league?.upcoming ?? [];
-    return fixturesRaw.map(normalizeFixture).filter(Boolean);
-  }, [league]);
+  const fixtures = useMemo(() => league?.upcomingFixtures ?? [], [league]);
 
-  // 2. Lógica de Badge Predictible
   const getPredictableBadge = (fixture) => {
     if (fixture.predictable === true || Number(fixture.predictable) > 0) return 'available';
     return 'empty';
   };
 
-  // 3. Carga dinámica de probabilidades al expandir la liga (Densificación Sportsbook)
   useEffect(() => {
     if (!isExpanded || fixtures.length === 0) return;
     let cancelled = false;
 
-    const loadMarkets = async () => {
-      const nextMarkets = {};
+    const loadPredictions = async () => {
+      const nextPredictions = {};
       const nextStatuses = {};
 
       await Promise.all(
         fixtures.map(async (fixture) => {
           try {
-            const response = await getProbabilitiesByFixture(fixture.fixtureId);
-            const normalized = normalizeProbabilities(response);
-            nextMarkets[fixture.fixtureId] = normalized.items;
-            nextStatuses[fixture.fixtureId] = normalized.items.length > 0 ? 'available' : 'empty';
+            const predictions = await getPredictionsByFixture(fixture.fixtureId);
+            nextPredictions[fixture.fixtureId] = predictions;
+            nextStatuses[fixture.fixtureId] = predictions.length > 0 ? 'available' : 'empty';
           } catch (error) {
-            nextMarkets[fixture.fixtureId] = [];
+            nextPredictions[fixture.fixtureId] = [];
             nextStatuses[fixture.fixtureId] = error.kind === 'plan_restricted' ? 'restricted' : 'empty';
           }
         }),
       );
 
       if (!cancelled) {
-        setMarketsByFixture((prev) => ({ ...prev, ...nextMarkets }));
-        setMarketStatusByFixture((prev) => ({ ...prev, ...nextStatuses }));
+        setPredictionsByFixture((prev) => ({ ...prev, ...nextPredictions }));
+        setPredictionStatusByFixture((prev) => ({ ...prev, ...nextStatuses }));
       }
     };
 
-    loadMarkets();
+    loadPredictions();
     return () => { cancelled = true; };
   }, [isExpanded, fixtures]);
 
-  // 4. Renderizado de la previsualización de cuotas reales con traducción
-  const marketOptionsPreview = (fixtureId) => {
-    const markets = marketsByFixture[fixtureId] ?? [];
-    const market = markets[0];
+  const predictionOptionsPreview = (fixtureId) => {
+    const market = (predictionsByFixture[fixtureId] ?? [])[0];
     if (!market?.options?.length) return null;
 
     return market.options.slice(0, 3).map((option) => (
@@ -92,17 +81,16 @@ const LeagueCard = ({ league }) => {
 
         <div className="league-meta sportsbook-meta">
           <span className="fixtures-count">{fixtures.length} partidos</span>
-          <Badge status="available" label="Probabilidades API" />
+          <Badge status="available" label="Predictions API" />
         </div>
       </div>
 
       {isExpanded && (
         <div className="fixtures-list sportsbook-table">
-          {/* Cabecera de tabla alineada */}
           <div className="fixture-table-head">
             <span>Hora</span>
             <span>Partido</span>
-            <span>Mercado principal</span>
+            <span>Predicción principal</span>
             <span>Estado</span>
           </div>
 
@@ -115,10 +103,8 @@ const LeagueCard = ({ league }) => {
               onClick={() => navigate(`/match/${fixture.fixtureId}`)}
               onKeyDown={(e) => e.key === 'Enter' && navigate(`/match/${fixture.fixtureId}`)}
             >
-              {/* Columna 1: Hora */}
               <div className="fixture-time">{fixture.kickoff || 'Hora N/D'}</div>
 
-              {/* Columna 2: Equipos alineados horizontalmente */}
               <div className="fixture-teams compact">
                 <div className="team-block">
                   <img src={fixture.homeLogo || '/vite.svg'} alt="Home" />
@@ -131,20 +117,18 @@ const LeagueCard = ({ league }) => {
                 </div>
               </div>
 
-              {/* Columna 3: Mercado Principal (Probabilidades Reales) */}
               <div className="fixture-market-preview">
-                {marketOptionsPreview(fixture.fixtureId) || (
+                {predictionOptionsPreview(fixture.fixtureId) || (
                   <span className="fixture-extra">
-                    {marketStatusByFixture[fixture.fixtureId] === 'restricted'
+                    {predictionStatusByFixture[fixture.fixtureId] === 'restricted'
                       ? 'No incluido en tu plan'
-                      : 'Sin probabilidades'}
+                      : 'Sin predicciones'}
                   </span>
                 )}
               </div>
 
-              {/* Columna 4: Indicadores de estado */}
               <div className="fixture-badges">
-                <Badge status={getPredictableBadge(fixture)} label="Predicción" />
+                <Badge status={getPredictableBadge(fixture)} label="Predictable" />
               </div>
             </div>
           ))}

@@ -167,3 +167,27 @@ Se mantiene la lógica del producto:
 - No todos los fixtures tienen predicciones/value bets.
 
 Estas condiciones se reportan como estado funcional de datos, no como fallo de despliegue.
+
+
+---
+
+## 9) Arquitectura modular aplicada
+
+Se incorporó separación estricta por dominios en `src/modules` y en proxies `api/*`:
+
+- `predictions` (UI y mapper dedicados)
+- `odds` (UI y mapper dedicados)
+- `fixtures`
+- `live`
+- `stats` (incluye `events`)
+- `tournaments`
+- `teams`
+- `standings`
+
+Documento técnico: `src/docs/sportmonks-modules.md`.
+
+Rutas UI principales:
+
+- `/predictions` → vista de predicciones/probabilidades
+- `/odds` → vista de odds pre-match
+- `/match/:fixtureId` → contenedor con bloques separados (Predictions vs Odds)

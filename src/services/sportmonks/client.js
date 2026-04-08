@@ -1,6 +1,6 @@
 import axios from 'axios';
-import { getCache, setCache, shouldCacheData } from '../utils/cacheManager';
-import { logApiRequest } from '../utils/apiMonitor';
+import { getCache, setCache, shouldCacheData } from '../../utils/cacheManager';
+import { logApiRequest } from '../../utils/apiMonitor';
 
 const apiClient = axios.create({
   baseURL: '/api',
@@ -76,8 +76,14 @@ const isValidPayload = (data) => {
   return true;
 };
 
-const fetchWithCache = async ({ cacheKey, endpoint, params = {}, ttl = 60_000, fallbackMessage }) => {
-  const cached = getCache(cacheKey);
+export const fetchFromSportmonks = async ({
+  cacheKey,
+  endpoint,
+  params = {},
+  ttl = 60_000,
+  fallbackMessage = 'No se pudo completar la solicitud.',
+}) => {
+  const cached = cacheKey ? getCache(cacheKey) : null;
   if (cached) {
     logApiRequest(endpoint, true);
     return cached;
@@ -86,43 +92,15 @@ const fetchWithCache = async ({ cacheKey, endpoint, params = {}, ttl = 60_000, f
   try {
     logApiRequest(endpoint, false);
     const response = await apiClient.get(endpoint, { params });
-    if (isValidPayload(response.data)) {
+
+    if (cacheKey && isValidPayload(response.data)) {
       setCache(cacheKey, response.data, ttl);
     }
+
     return response.data;
   } catch (error) {
     throw mapApiError(error, fallbackMessage);
   }
 };
-
-export const getLeaguesWithUpcoming = async () => fetchWithCache({
-  cacheKey: 'leagues_upcoming',
-  endpoint: '/leagues',
-  ttl: 120_000,
-  fallbackMessage: 'No se pudo cargar el listado de ligas.',
-});
-
-export const getFixtureById = async (fixtureId) => fetchWithCache({
-  cacheKey: `fixture_${fixtureId}`,
-  endpoint: '/fixtures',
-  params: { id: fixtureId },
-  ttl: 180_000,
-  fallbackMessage: `No se pudo cargar el fixture ${fixtureId}.`,
-});
-
-export const getProbabilitiesByFixture = async (fixtureId) => fetchWithCache({
-  cacheKey: `probabilities_${fixtureId}`,
-  endpoint: '/predictions',
-  params: { fixtureId },
-  ttl: 90_000,
-  fallbackMessage: `No se pudieron cargar probabilities para fixture ${fixtureId}.`,
-});
-
-export const getUsage = async () => fetchWithCache({
-  cacheKey: 'usage_snapshot',
-  endpoint: '/usage',
-  ttl: 60_000,
-  fallbackMessage: 'No se pudo cargar usage.',
-});
 
 export default apiClient;

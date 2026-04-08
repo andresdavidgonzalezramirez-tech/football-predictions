@@ -7,6 +7,13 @@ import { fileURLToPath } from 'node:url';
 import leaguesHandler from './api/leagues.js';
 import fixturesHandler from './api/fixtures.js';
 import predictionsHandler from './api/predictions.js';
+import oddsHandler from './api/odds.js';
+import liveHandler from './api/live.js';
+import statsHandler from './api/stats.js';
+import eventsHandler from './api/events.js';
+import teamsHandler from './api/teams.js';
+import tournamentsHandler from './api/tournaments.js';
+import standingsHandler from './api/standings.js';
 import usageHandler from './api/usage.js';
 
 const app = express();
@@ -24,6 +31,13 @@ app.get('/health', (_req, res) => {
 app.all('/api/leagues', runHandler(leaguesHandler));
 app.all('/api/fixtures', runHandler(fixturesHandler));
 app.all('/api/predictions', runHandler(predictionsHandler));
+app.all('/api/odds', runHandler(oddsHandler));
+app.all('/api/live', runHandler(liveHandler));
+app.all('/api/stats', runHandler(statsHandler));
+app.all('/api/events', runHandler(eventsHandler));
+app.all('/api/teams', runHandler(teamsHandler));
+app.all('/api/tournaments', runHandler(tournamentsHandler));
+app.all('/api/standings', runHandler(standingsHandler));
 app.all('/api/usage', runHandler(usageHandler));
 
 app.use(express.static(distDir));
