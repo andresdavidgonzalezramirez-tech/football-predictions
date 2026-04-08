@@ -1,11 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Badge from '../components/Badge';
-import { getLeaguesWithUpcoming, getProbabilitiesByFixture } from '../services/sportsmonksApi';
+import { getNormalizedLeaguesWithFixtures } from '../modules/fixtures/services/fixtures.service';
+import { getPredictionsByFixture } from '../modules/predictions/services/predictions.service';
 import { formatProbabilityValue } from '../utils/marketTranslations';
-import normalizeFixture from '../utils/normalizers/normalizeFixture';
-import normalizeProbabilities from '../utils/normalizers/normalizeProbabilities';
-import '../components/LeagueCard.css';
 import './MatchDetails.css';
 
 const toDateKey = (value) => {
@@ -22,17 +20,12 @@ const formatKickoff = (value) => {
   return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
 };
 
-const getPredictableBadge = (fixture) => {
-  if (fixture.predictable === true || Number(fixture.predictable) > 0) return 'available';
-  return 'empty';
-};
-
 const MarketOverview = () => {
   const [fixtures, setFixtures] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [marketsByFixture, setMarketsByFixture] = useState({});
-  const [marketStatusByFixture, setMarketStatusByFixture] = useState({});
+  const [predictionsByFixture, setPredictionsByFixture] = useState({});
+  const [predictionStatusByFixture, setPredictionStatusByFixture] = useState({});
 
   useEffect(() => {
     const load = async () => {
@@ -40,13 +33,11 @@ const MarketOverview = () => {
       setError(null);
 
       try {
-        const leaguesResponse = await getLeaguesWithUpcoming();
-        const rawFixtures = (leaguesResponse?.data ?? []).flatMap(
-          (league) => league?.upcoming?.data ?? league?.upcoming ?? [],
-        );
-        setFixtures(rawFixtures.map(normalizeFixture).filter(Boolean));
+        const leagues = await getNormalizedLeaguesWithFixtures();
+        const normalizedFixtures = leagues.flatMap((league) => league.upcomingFixtures ?? []);
+        setFixtures(normalizedFixtures);
       } catch (err) {
-        setError(err.message ?? 'No se pudo construir el resumen de mercado.');
+        setError(err.message ?? 'No se pudo construir el resumen de predicciones.');
       } finally {
         setLoading(false);
       }
@@ -68,41 +59,40 @@ const MarketOverview = () => {
 
     let cancelled = false;
 
-    const loadMarkets = async () => {
-      const nextMarkets = {};
+    const loadPredictions = async () => {
+      const nextPredictions = {};
       const nextStatuses = {};
 
       await Promise.all(
         todayFixtures.map(async (fixture) => {
           try {
-            const response = await getProbabilitiesByFixture(fixture.fixtureId);
-            const normalized = normalizeProbabilities(response);
-            nextMarkets[fixture.fixtureId] = normalized.items;
-            nextStatuses[fixture.fixtureId] = normalized.items.length > 0 ? 'available' : 'empty';
-          } catch (marketError) {
-            nextMarkets[fixture.fixtureId] = [];
-            nextStatuses[fixture.fixtureId] = marketError.kind === 'plan_restricted' ? 'restricted' : 'empty';
+            const predictions = await getPredictionsByFixture(fixture.fixtureId);
+            nextPredictions[fixture.fixtureId] = predictions;
+            nextStatuses[fixture.fixtureId] = predictions.length > 0 ? 'available' : 'empty';
+          } catch (predictionError) {
+            nextPredictions[fixture.fixtureId] = [];
+            nextStatuses[fixture.fixtureId] = predictionError.kind === 'plan_restricted' ? 'restricted' : 'empty';
           }
         }),
       );
 
       if (!cancelled) {
-        setMarketsByFixture((prev) => ({ ...prev, ...nextMarkets }));
-        setMarketStatusByFixture((prev) => ({ ...prev, ...nextStatuses }));
+        setPredictionsByFixture((prev) => ({ ...prev, ...nextPredictions }));
+        setPredictionStatusByFixture((prev) => ({ ...prev, ...nextStatuses }));
       }
     };
 
-    loadMarkets();
+    loadPredictions();
 
     return () => {
       cancelled = true;
     };
   }, [todayFixtures]);
 
-  const marketOptionsPreview = (fixtureId) => {
-    const market = (marketsByFixture[fixtureId] ?? [])[0];
+  const predictionPreview = (fixtureId) => {
+    const market = (predictionsByFixture[fixtureId] ?? [])[0];
     if (!market?.options?.length) {
-      if (marketStatusByFixture[fixtureId] === 'restricted') return 'No incluido en tu plan';
+      if (predictionStatusByFixture[fixtureId] === 'restricted') return 'No incluido en tu plan';
       return '—';
     }
 
@@ -113,7 +103,7 @@ const MarketOverview = () => {
     ));
   };
 
-  if (loading) return <main className="dashboard"><p>Cargando resumen de mercado…</p></main>;
+  if (loading) return <main className="dashboard"><p>Cargando resumen de predicciones…</p></main>;
   if (error) return <main className="dashboard"><p>{error}</p></main>;
 
   return (
@@ -123,7 +113,7 @@ const MarketOverview = () => {
           ← Volver al inicio
         </Link>
 
-        <h2>Resumen de mercado — Partidos de hoy</h2>
+        <h2>Predictions UI — Partidos de hoy</h2>
 
         {todayFixtures.length === 0 ? (
           <p style={{ marginTop: 12 }}>No hay partidos programados para hoy.</p>
@@ -132,7 +122,7 @@ const MarketOverview = () => {
             <div className="fixture-table-head">
               <span>Hora</span>
               <span>Partido</span>
-              <span>Mercado principal</span>
+              <span>Predicción principal</span>
               <span>Estado</span>
             </div>
 
@@ -157,11 +147,11 @@ const MarketOverview = () => {
                 </div>
 
                 <div className="fixture-market-preview">
-                  {marketOptionsPreview(fixture.fixtureId)}
+                  {predictionPreview(fixture.fixtureId)}
                 </div>
 
                 <div className="fixture-badges">
-                  <Badge status={getPredictableBadge(fixture)} label="Predicción" />
+                  <Badge status={fixture.predictable ? 'available' : 'empty'} label="Predictable" />
                 </div>
               </Link>
             ))}

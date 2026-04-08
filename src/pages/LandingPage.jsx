@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getLeaguesWithUpcoming } from '../services/sportsmonksApi';
+import { getNormalizedLeaguesWithFixtures } from '../modules/fixtures/services/fixtures.service';
 import GlassCard from '../components/GlassCard';
 import LeagueCard from '../components/LeagueCard';
 import './LandingPage.css';
@@ -14,8 +14,8 @@ const LandingPage = () => {
     const run = async () => {
       try {
         setLoading(true);
-        const response = await getLeaguesWithUpcoming();
-        setLeagues(response?.data ?? []);
+        const normalizedLeagues = await getNormalizedLeaguesWithFixtures();
+        setLeagues(normalizedLeagues);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -25,8 +25,6 @@ const LandingPage = () => {
 
     run();
   }, []);
-
-  // --- Manejo de Estados de Carga y Error ---
 
   if (loading) {
     return (
@@ -60,39 +58,31 @@ const LandingPage = () => {
     );
   }
 
-  // --- Cálculo de KPIs (Métricas) ---
-
-  const totalFixtures = leagues.reduce((sum, league) => (
-    sum + ((league?.upcoming?.data ?? league?.upcoming ?? []).length)
-  ), 0);
-
+  const totalFixtures = leagues.reduce((sum, league) => sum + (league.upcomingFixtures?.length ?? 0), 0);
   const leaguesWithCountry = leagues.filter((league) => league?.country?.name).length;
 
   const predictableFixtures = leagues.reduce((sum, league) => {
-    const fixtures = league?.upcoming?.data ?? league?.upcoming ?? [];
-    // Comprobación robusta en ambas ubicaciones posibles del flag 'predictable'
-    const predictableCount = fixtures.filter((fixture) => 
-      fixture?.metadata?.predictable === true || fixture?.predictable === true
-    ).length;
-    return sum + predictableCount;
+    const fixtures = league.upcomingFixtures ?? [];
+    return sum + fixtures.filter((fixture) => fixture?.predictable === true || fixture?.predictable === 1).length;
   }, 0);
-
-  // --- Renderizado Principal ---
 
   return (
     <main className="landing-page">
       <header className="page-header fp-glow">
         <h1>Predicción de fútbol</h1>
         <p>Vista limpia de ligas, partidos e indicadores clave.</p>
-        
+
         <div className="landing-kpis">
           <span>Ligas: <strong>{leagues.length}</strong></span>
           <span>Partidos listados: <strong>{totalFixtures}</strong></span>
           <span>Ligas con país: <strong>{leaguesWithCountry}</strong></span>
           <span>Partidos predecibles: <strong>{predictableFixtures}</strong></span>
         </div>
-        
-        <Link to="/market" className="retry-button">Abrir resumen de mercado</Link>
+
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <Link to="/predictions" className="retry-button">UI Predictions</Link>
+          <Link to="/odds" className="retry-button">UI Odds</Link>
+        </div>
       </header>
 
       <div className="leagues-container">
