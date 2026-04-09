@@ -56,8 +56,8 @@ const buildUpstreamError = ({ response, data, module, fixtureId, bookmakerId }) 
       : `Sportmonks request failed for ${module}.`),
     context: {
       module,
-      fixtureId,
-      bookmakerId: bookmakerId ?? null,
+      fixtureId: Number(fixtureId),
+      bookmakerId: Number(bookmakerId),
       upstreamStatus: response.status,
       upstreamError: data ?? null,
     },
@@ -65,9 +65,7 @@ const buildUpstreamError = ({ response, data, module, fixtureId, bookmakerId }) 
 };
 
 export default async function handler(req, res) {
-  if (!handleRequestGuards(req, res)) {
-    return;
-  }
+  if (!handleRequestGuards(req, res)) return;
 
   const { fixtureId, bookmakerId = DEFAULT_BOOKMAKER_ID, ...restQuery } = req.query;
   if (!fixtureId) {
@@ -119,13 +117,15 @@ export default async function handler(req, res) {
     // Manejo de Errores de Upstream (Prioridad 2)
     const failed = modules.find(({ result }) => !result.response.ok);
     if (failed) {
-      return sendApiError(res, buildUpstreamError({
+      const normalizedError = buildUpstreamError({
         response: failed.result.response,
         data: failed.result.data,
         module: failed.key,
         fixtureId,
         bookmakerId,
-      }));
+      });
+      console.error('[SPORTMONKS_PROXY_ERROR]', normalizedError);
+      return sendApiError(res, normalizedError);
     }
 
     // Respuesta Exitosa Unificada
@@ -150,6 +150,13 @@ export default async function handler(req, res) {
       },
     });
   } catch (error) {
+    console.error('[SPORTMONKS_PROXY_FATAL]', {
+      code: 'UNIFIED_PREDICTIONS_PROXY_ERROR',
+      detail: error.message,
+      fixtureId,
+      bookmakerId,
+    });
+
     return sendApiError(res, {
       status: 500,
       code: 'UNIFIED_PREDICTIONS_PROXY_ERROR',

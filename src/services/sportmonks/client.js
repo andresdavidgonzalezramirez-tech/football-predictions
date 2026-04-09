@@ -132,7 +132,8 @@ const validateAgainstSchema = (payload, schema) => {
 
   const props = schema.properties?.data?.properties ?? {};
   return Object.entries(props).every(([propName, propRule]) => {
-    if (data[propName] === undefined) return false; // En el contrato unificado deben existir
+    // En el contrato unificado deben existir tras la normalización
+    if (data[propName] === undefined) return false; 
     if (propRule.type === 'array') return Array.isArray(data[propName]);
     return true;
   });
@@ -158,7 +159,7 @@ export const fetchFromSportmonks = async ({
     // Normalizamos para asegurar que existan los campos del contrato unificado
     const normalized = normalizeUnifiedContract(response.data);
 
-    // Si la validación falla tras normalizar, devolvemos un objeto seguro por defecto
+    // Si la validación falla tras normalizar, devolvemos un objeto seguro con arrays vacíos
     const payloadToReturn = validateAgainstSchema(normalized, DATA_CONTRACT_SCHEMA)
       ? normalized
       : {

@@ -5,7 +5,6 @@
  */
 import {
   PLAN_RESTRICTED_STATUSES,
-  SPORTMONKS_BASE,
   fetchSportmonksPage,
   getApiToken,
   handleRequestGuards,
@@ -47,6 +46,7 @@ const normalizeStatsRows = (fixturePayload) => {
 
 const buildUpstreamError = ({ response, data, module, fixtureId, bookmakerId }) => {
   const restricted = PLAN_RESTRICTED_STATUSES.has(response.status);
+
   return {
     status: response.status,
     code: data?.code || (restricted ? 'PLAN_RESTRICTED' : 'SPORTMONKS_REQUEST_FAILED'),
@@ -55,8 +55,8 @@ const buildUpstreamError = ({ response, data, module, fixtureId, bookmakerId }) 
       : `Sportmonks request failed for ${module}.`),
     context: {
       module,
-      fixtureId,
-      bookmakerId: bookmakerId ?? null,
+      fixtureId: Number(fixtureId),
+      bookmakerId: Number(bookmakerId),
       upstreamStatus: response.status,
       upstreamError: data ?? null,
     },
@@ -117,14 +117,18 @@ export default async function handler(req, res) {
     // Check for other failures (401, 403, 404, etc.)
     const failed = modules.find(({ result }) => !result.response.ok);
     if (failed) {
-      return sendApiError(res, buildUpstreamError({
+      const errorPayload = buildUpstreamError({
         response: failed.result.response,
         data: failed.result.data,
         module: failed.key,
         fixtureId,
         bookmakerId,
-      }));
+      });
+      console.error('[SPORTMONKS_PROXY_ERROR]', errorPayload);
+      return sendApiError(res, errorPayload);
     }
+
+    const predictions = parseRows(predictionsResult.data);
 
     // Success response with unified data structure
     return res.status(200).json({
@@ -140,12 +144,19 @@ export default async function handler(req, res) {
       generatedAt: new Date().toISOString(),
       data: {
         odds: parseRows(oddsResult.data),
-        predictions: parseRows(predictionsResult.data),
-        probabilities: parseRows(predictionsResult.data), // Aliased for backward compatibility
+        predictions: predictions,
+        probabilities: predictions, // Aliased for backward compatibility
         stats: normalizeStatsRows(statsResult.data),
       },
     });
   } catch (error) {
+    console.error('[SPORTMONKS_PROXY_FATAL]', {
+      code: 'UNIFIED_ODDS_PROXY_ERROR',
+      detail: error.message,
+      fixtureId,
+      bookmakerId,
+    });
+
     return sendApiError(res, {
       status: 500,
       code: 'UNIFIED_ODDS_PROXY_ERROR',

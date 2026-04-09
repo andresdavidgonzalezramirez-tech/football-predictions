@@ -10,9 +10,9 @@ export const setCorsHeaders = (res) => {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 };
 
-export const getApiToken = () => 
-  process.env.SPORTMONKS_API_TOKEN || 
-  process.env.API_TOKEN || 
+export const getApiToken = () =>
+  process.env.SPORTMONKS_API_TOKEN ||
+  process.env.API_TOKEN ||
   process.env.VITE_SPORTMONKS_API_TOKEN;
 
 export const sendApiError = (res, {
