@@ -76,6 +76,37 @@ const isValidPayload = (data) => {
   return true;
 };
 
+const ensureArray = (value) => (Array.isArray(value) ? value : []);
+
+const hasUnifiedKeys = (payload) => {
+  const data = payload?.data;
+  if (!data || typeof data !== 'object') return false;
+
+  return Object.prototype.hasOwnProperty.call(data, 'probabilities')
+    || Object.prototype.hasOwnProperty.call(data, 'predictions')
+    || Object.prototype.hasOwnProperty.call(data, 'odds')
+    || Object.prototype.hasOwnProperty.call(data, 'stats');
+};
+
+const normalizeUnifiedContract = (payload) => {
+  if (!payload || typeof payload !== 'object') return payload;
+  if (!hasUnifiedKeys(payload)) return payload;
+
+  const rawData = payload.data && typeof payload.data === 'object' ? payload.data : {};
+  const probabilities = ensureArray(rawData.probabilities ?? rawData.predictions);
+
+  return {
+    ...payload,
+    data: {
+      ...rawData,
+      probabilities,
+      predictions: probabilities,
+      odds: ensureArray(rawData.odds),
+      stats: ensureArray(rawData.stats),
+    },
+  };
+};
+
 export const fetchFromSportmonks = async ({
   cacheKey,
   endpoint,
@@ -92,12 +123,13 @@ export const fetchFromSportmonks = async ({
   try {
     logApiRequest(endpoint, false);
     const response = await apiClient.get(endpoint, { params });
+    const payloadToReturn = normalizeUnifiedContract(response.data);
 
-    if (cacheKey && isValidPayload(response.data)) {
-      setCache(cacheKey, response.data, ttl);
+    if (cacheKey && isValidPayload(payloadToReturn)) {
+      setCache(cacheKey, payloadToReturn, ttl);
     }
 
-    return response.data;
+    return payloadToReturn;
   } catch (error) {
     throw mapApiError(error, fallbackMessage);
   }
