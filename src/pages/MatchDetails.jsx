@@ -146,7 +146,7 @@ const MatchDetails = () => {
                   <div key={item.id} className="fp-market-card">
                     <div className="fp-market-head"><strong>{item.displayName}</strong></div>
                     <div className="fp-market-options">
-                      {item.options.map((opt) => (
+                      {(Array.isArray(item.options) ? item.options : []).map((opt) => (
                         <button key={`${item.id}-${opt.rawKey || opt.key}`} className="fp-odd-pill"><span>{opt.label}</span><strong>{formatProbabilityValue(opt.value)}</strong></button>
                       ))}
                     </div>

@@ -34,7 +34,8 @@ const MarketOverview = () => {
 
       try {
         const leagues = await getNormalizedLeaguesWithFixtures();
-        const normalizedFixtures = leagues.flatMap((league) => league.upcomingFixtures ?? []);
+        const safeLeagues = Array.isArray(leagues) ? leagues : [];
+        const normalizedFixtures = safeLeagues.flatMap((league) => league.upcomingFixtures ?? []);
         setFixtures(normalizedFixtures);
       } catch (err) {
         setError(err.message ?? 'No se pudo construir el resumen de predicciones.');

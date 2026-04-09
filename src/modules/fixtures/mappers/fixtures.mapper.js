@@ -46,5 +46,5 @@ export const mapFixture = (payload) => {
 
 export const mapLeagueFixtures = (leaguePayload) => {
   const fixturesRaw = leaguePayload?.upcoming?.data ?? leaguePayload?.upcoming ?? [];
-  return fixturesRaw.map(mapFixture).filter(Boolean);
+  return (Array.isArray(fixturesRaw) ? fixturesRaw : []).map(mapFixture).filter(Boolean);
 };
