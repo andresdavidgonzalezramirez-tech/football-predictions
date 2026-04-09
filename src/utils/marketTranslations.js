@@ -69,6 +69,12 @@ const MARKET_TRANSLATION_RULES = [
     patterns: ['half-time-full-time', 'half time/full time', 'half-time/full-time', 'ht-ft'],
   },
   {
+    key: 'asian_handicap',
+    title: 'Asian Handicap',
+    category: 'Asian Handicap',
+    patterns: ['asian handicap', 'asian-handicap', 'ah'],
+  },
+  {
     key: 'home_over_under',
     title: 'Equipo local Más / Menos',
     category: 'Equipo local Más/Menos',
@@ -103,7 +109,7 @@ const cleanInput = (...parts) => parts
 
 const extractGoalLine = (...parts) => {
   const text = cleanInput(...parts).replace(/_/g, '.');
-  const match = text.match(/(\d+(?:\.\d+)?)/);
+  const match = text.match(/([+-]?\d+(?:\.\d+)?)/);
   return match ? match[1] : null;
 };
 
@@ -164,6 +170,18 @@ const normalizeOptionRaw = (value) => String(value ?? '').trim().toLowerCase();
 
 const isScoreToken = (value) => /^\d+[-:]\d+$/.test(String(value));
 
+const parseAsianHandicapOption = (value) => {
+  const normalized = normalizeOptionRaw(value).replace(/\s+/g, '_');
+  const match = normalized.match(/^(home|away|local|visitante)[_:-]?([+-]?\d+(?:\.\d+)?)$/);
+  if (!match) return null;
+
+  const side = match[1] === 'home' || match[1] === 'local' ? 'Local' : 'Visitante';
+  const line = Number(match[2]);
+  if (!Number.isFinite(line)) return null;
+
+  return `${side} ${line > 0 ? '+' : ''}${line}`;
+};
+
 export const resolveMarketPresentation = ({ marketName, marketCode, developerName } = {}) => {
   const rule = detectRule(marketName, marketCode, developerName);
   const line = extractGoalLine(marketName, marketCode, developerName);
@@ -200,6 +218,11 @@ export const translateMarketOption = (optionKey, marketContext = {}) => {
   const normalized = normalizeOptionRaw(raw);
   const tokens = tokenizeOption(normalized);
   const { ruleKey, line } = resolveMarketPresentation(marketContext);
+
+  if (ruleKey === 'asian_handicap') {
+    const asianLabel = parseAsianHandicapOption(normalized);
+    if (asianLabel) return asianLabel;
+  }
 
   if (['team_to_score_first', 'team_to_score_last'].includes(ruleKey) && ['draw', 'none', 'no_goal'].includes(normalized)) {
     return 'Nadie / Sin gol';
