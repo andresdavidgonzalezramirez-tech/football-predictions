@@ -76,6 +76,63 @@ const isValidPayload = (data) => {
   return true;
 };
 
+const DATA_CONTRACT_SCHEMA = {
+  type: 'object',
+  required: ['data'],
+  properties: {
+    data: {
+      type: 'object',
+      properties: {
+        odds: { type: 'array' },
+        predictions: { type: 'array' },
+        stats: { type: 'array' },
+      },
+    },
+  },
+};
+
+const ensureArray = (value) => (Array.isArray(value) ? value : []);
+
+const normalizeUnifiedContract = (payload) => {
+  if (!payload || typeof payload !== 'object') return payload;
+
+  const hasUnifiedData = payload?.data && typeof payload.data === 'object' && (
+    Array.isArray(payload.data.odds)
+    || Array.isArray(payload.data.predictions)
+    || Array.isArray(payload.data.stats)
+  );
+
+  if (hasUnifiedData) {
+    return {
+      ...payload,
+      data: {
+        ...payload.data,
+        odds: ensureArray(payload.data.odds),
+        predictions: ensureArray(payload.data.predictions),
+        stats: ensureArray(payload.data.stats),
+      },
+    };
+  }
+
+  return payload;
+};
+
+const validateAgainstSchema = (payload, schema) => {
+  if (!payload || typeof payload !== 'object') return false;
+
+  if (schema.required?.some((field) => payload[field] === undefined)) return false;
+
+  const data = payload.data;
+  if (!data || typeof data !== 'object') return false;
+
+  const props = schema.properties?.data?.properties ?? {};
+  return Object.entries(props).every(([propName, propRule]) => {
+    if (data[propName] === undefined) return true;
+    if (propRule.type === 'array') return Array.isArray(data[propName]);
+    return true;
+  });
+};
+
 export const fetchFromSportmonks = async ({
   cacheKey,
   endpoint,
@@ -92,12 +149,17 @@ export const fetchFromSportmonks = async ({
   try {
     logApiRequest(endpoint, false);
     const response = await apiClient.get(endpoint, { params });
+    const normalized = normalizeUnifiedContract(response.data);
 
-    if (cacheKey && isValidPayload(response.data)) {
-      setCache(cacheKey, response.data, ttl);
+    const payloadToReturn = validateAgainstSchema(normalized, DATA_CONTRACT_SCHEMA)
+      ? normalized
+      : response.data;
+
+    if (cacheKey && isValidPayload(payloadToReturn)) {
+      setCache(cacheKey, payloadToReturn, ttl);
     }
 
-    return response.data;
+    return payloadToReturn;
   } catch (error) {
     throw mapApiError(error, fallbackMessage);
   }
