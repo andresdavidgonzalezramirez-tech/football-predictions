@@ -76,7 +76,7 @@ const isValidPayload = (data) => {
   return true;
 };
 
-const ensureArray = (value) => (Array.isArray(value) ? value : []);
+// --- RESOLUCIÓN DE CONFLICTOS: NORMALIZACIÓN Y ESQUEMA ---
 
 const DATA_CONTRACT_SCHEMA = {
   type: 'object',
@@ -94,8 +94,37 @@ const DATA_CONTRACT_SCHEMA = {
   },
 };
 
+const ensureArray = (value) => (Array.isArray(value) ? value : []);
+
+/**
+ * Garantiza que el payload contenga la estructura unificada.
+ * Mezcla la lógica de alias (probabilities/predictions) con la limpieza de arrays.
+ */
+const normalizeUnifiedContract = (payload) => {
+  if (!payload || typeof payload !== 'object') {
+    return { data: { odds: [], probabilities: [], predictions: [], stats: [] } };
+  }
+
+  const rawData = payload.data && typeof payload.data === 'object' ? payload.data : {};
+  
+  // Soporte para ambos nombres (alias) y garantía de Array
+  const baseProbabilities = ensureArray(rawData.probabilities ?? rawData.predictions);
+
+  return {
+    ...payload,
+    data: {
+      ...rawData,
+      odds: ensureArray(rawData.odds),
+      probabilities: baseProbabilities,
+      predictions: baseProbabilities,
+      stats: ensureArray(rawData.stats),
+    },
+  };
+};
+
 const validateAgainstSchema = (payload, schema) => {
   if (!payload || typeof payload !== 'object') return false;
+
   if (schema.required?.some((field) => payload[field] === undefined)) return false;
 
   const data = payload.data;
@@ -103,39 +132,11 @@ const validateAgainstSchema = (payload, schema) => {
 
   const props = schema.properties?.data?.properties ?? {};
   return Object.entries(props).every(([propName, propRule]) => {
-    if (data[propName] === undefined) return false;
+    // En el contrato unificado deben existir tras la normalización
+    if (data[propName] === undefined) return false; 
     if (propRule.type === 'array') return Array.isArray(data[propName]);
     return true;
   });
-};
-
-const hasUnifiedKeys = (payload) => {
-  const data = payload?.data;
-  if (!data || typeof data !== 'object') return false;
-
-  return Object.prototype.hasOwnProperty.call(data, 'probabilities')
-    || Object.prototype.hasOwnProperty.call(data, 'predictions')
-    || Object.prototype.hasOwnProperty.call(data, 'odds')
-    || Object.prototype.hasOwnProperty.call(data, 'stats');
-};
-
-const normalizeUnifiedContract = (payload) => {
-  if (!payload || typeof payload !== 'object') return payload;
-  if (!hasUnifiedKeys(payload)) return payload;
-
-  const rawData = payload.data && typeof payload.data === 'object' ? payload.data : {};
-  const probabilities = ensureArray(rawData.probabilities ?? rawData.predictions);
-
-  return {
-    ...payload,
-    data: {
-      ...rawData,
-      probabilities,
-      predictions: probabilities,
-      odds: ensureArray(rawData.odds),
-      stats: ensureArray(rawData.stats),
-    },
-  };
 };
 
 export const fetchFromSportmonks = async ({
@@ -154,10 +155,17 @@ export const fetchFromSportmonks = async ({
   try {
     logApiRequest(endpoint, false);
     const response = await apiClient.get(endpoint, { params });
+    
+    // Normalizamos para asegurar que existan los campos del contrato unificado
     const normalized = normalizeUnifiedContract(response.data);
+
+    // Si la validación falla tras normalizar, devolvemos un objeto seguro con arrays vacíos
     const payloadToReturn = validateAgainstSchema(normalized, DATA_CONTRACT_SCHEMA)
       ? normalized
-      : response.data;
+      : {
+          ...response.data,
+          data: { odds: [], probabilities: [], predictions: [], stats: [] },
+        };
 
     if (cacheKey && isValidPayload(payloadToReturn)) {
       setCache(cacheKey, payloadToReturn, ttl);
