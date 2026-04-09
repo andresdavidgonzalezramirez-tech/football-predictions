@@ -18,7 +18,11 @@
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.4",
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "@babel/parser": "^7.28.0",
+    "@babel/traverse": "^7.28.0",
+    "@babel/generator": "^7.28.0",
+    "@babel/types": "^7.28.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",

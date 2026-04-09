@@ -1,0 +1,4 @@
+api/_shared.js merge=ours
+api/odds.js merge=ours
+api/predictions.js merge=ours
+src/services/sportmonks/client.js merge=ours

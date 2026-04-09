@@ -1,0 +1,40 @@
+name: smart-bot
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  auto-resolve:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run smart resolver
+        run: node scripts/smartResolver.js
+
+      - name: Commit and push changes
+        run: |
+          if [[ -n "$(git status --porcelain)" ]]; then
+            git config user.name "smart-bot"
+            git config user.email "bot@github.com"
+            git add -A
+            git commit -m "chore: auto-resolve merge conflicts with smart resolver"
+            git push
+          fi
