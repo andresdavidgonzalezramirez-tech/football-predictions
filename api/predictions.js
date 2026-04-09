@@ -6,6 +6,7 @@
 import {
   PLAN_RESTRICTED_STATUSES,
   fetchSportmonksPage,
+  getApiToken,
   handleRequestGuards,
   sendApiError,
 } from './_shared.js';
@@ -29,7 +30,6 @@ const DEFAULT_PREDICTIONS_INCLUDE = [
 const DEFAULT_STATS_INCLUDE = [
   'participants',
   'statistics.type',
-  'statistics.details',
   'statistics.details.type',
 ].join(';');
 
@@ -40,7 +40,7 @@ const parseRows = (payload) => {
   return [];
 };
 
-const parseStatsRows = (fixturePayload) => {
+const normalizeStatsRows = (fixturePayload) => {
   const fixture = fixturePayload?.data ?? fixturePayload;
   const stats = fixture?.statistics?.data ?? fixture?.statistics;
   return Array.isArray(stats) ? stats : [];
@@ -77,8 +77,10 @@ export default async function handler(req, res) {
     });
   }
 
+  const token = getApiToken();
+
   try {
-    const [probabilitiesResult, oddsResult, statsResult] = await Promise.all([
+    const [predictionsResult, oddsResult, statsResult] = await Promise.all([
       fetchSportmonksPage({
         path: `/predictions/probabilities/fixtures/${fixtureId}`,
         query: restQuery,
@@ -97,11 +99,12 @@ export default async function handler(req, res) {
     ]);
 
     const modules = [
-      { key: 'probabilities', result: probabilitiesResult },
+      { key: 'predictions', result: predictionsResult },
       { key: 'odds', result: oddsResult },
       { key: 'stats', result: statsResult },
     ];
 
+    // Manejo de Rate Limit (Prioridad 1)
     const rateLimited = modules.find(({ result }) => result.response.status === 429);
     if (rateLimited) {
       return sendApiError(res, {
@@ -112,6 +115,7 @@ export default async function handler(req, res) {
       });
     }
 
+    // Manejo de Errores de Upstream (Prioridad 2)
     const failed = modules.find(({ result }) => !result.response.ok);
     if (failed) {
       const normalizedError = buildUpstreamError({
@@ -125,22 +129,25 @@ export default async function handler(req, res) {
       return sendApiError(res, normalizedError);
     }
 
-    const probabilities = parseRows(probabilitiesResult.data);
+    // Respuesta Exitosa Unificada
+    const predictionsData = parseRows(predictionsResult.data);
 
     return res.status(200).json({
       fixtureId: Number(fixtureId),
       bookmakerId: Number(bookmakerId),
+      apiTokenConfigured: Boolean(token),
+      status: 'ok',
       includes: {
-        probabilities: DEFAULT_PREDICTIONS_INCLUDE,
+        predictions: DEFAULT_PREDICTIONS_INCLUDE,
         odds: DEFAULT_ODDS_INCLUDE,
         stats: DEFAULT_STATS_INCLUDE,
       },
       generatedAt: new Date().toISOString(),
       data: {
-        probabilities,
-        predictions: probabilities,
+        predictions: predictionsData,
+        probabilities: predictionsData, // Alias para contrato fail-safe
         odds: parseRows(oddsResult.data),
-        stats: parseStatsRows(statsResult.data),
+        stats: normalizeStatsRows(statsResult.data),
       },
     });
   } catch (error) {
