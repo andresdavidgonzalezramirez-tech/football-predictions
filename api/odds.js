@@ -1,9 +1,12 @@
 /**
  * Vercel Serverless Function - Unified fixture intelligence proxy
+ * Returns odds + probabilities + advanced fixture stats in one response.
+ * Fail-safe contract: always returns data.odds, data.predictions, and data.stats.
  */
 import {
   PLAN_RESTRICTED_STATUSES,
   fetchSportmonksPage,
+  getApiToken,
   handleRequestGuards,
   sendApiError,
 } from './_shared.js';
@@ -16,7 +19,7 @@ const DEFAULT_ODDS_INCLUDE = [
   'fixture.scores',
 ].join(';');
 
-const DEFAULT_PROBABILITIES_INCLUDE = [
+const DEFAULT_PREDICTIONS_INCLUDE = [
   'type',
   'fixture',
   'fixture.participants',
@@ -35,7 +38,7 @@ const parseRows = (payload) => {
   return [];
 };
 
-const parseStatsRows = (fixturePayload) => {
+const normalizeStatsRows = (fixturePayload) => {
   const fixture = fixturePayload?.data ?? fixturePayload;
   const stats = fixture?.statistics?.data ?? fixture?.statistics;
   return Array.isArray(stats) ? stats : [];
@@ -73,8 +76,10 @@ export default async function handler(req, res) {
     });
   }
 
+  const token = getApiToken();
+
   try {
-    const [oddsResult, probabilitiesResult, statsResult] = await Promise.all([
+    const [oddsResult, predictionsResult, statsResult] = await Promise.all([
       fetchSportmonksPage({
         path: `/odds/pre-match/fixtures/${fixtureId}/bookmakers/${bookmakerId}`,
         query: restQuery,
@@ -83,7 +88,7 @@ export default async function handler(req, res) {
       fetchSportmonksPage({
         path: `/predictions/probabilities/fixtures/${fixtureId}`,
         query: restQuery,
-        defaultParams: { include: DEFAULT_PROBABILITIES_INCLUDE, per_page: 50 },
+        defaultParams: { include: DEFAULT_PREDICTIONS_INCLUDE, per_page: 50 },
       }),
       fetchSportmonksPage({
         path: `/fixtures/${fixtureId}`,
@@ -94,10 +99,11 @@ export default async function handler(req, res) {
 
     const modules = [
       { key: 'odds', result: oddsResult },
-      { key: 'probabilities', result: probabilitiesResult },
+      { key: 'predictions', result: predictionsResult },
       { key: 'stats', result: statsResult },
     ];
 
+    // Check for critical errors (429 Rate Limit)
     const rateLimited = modules.find(({ result }) => result.response.status === 429);
     if (rateLimited) {
       return sendApiError(res, {
@@ -108,35 +114,39 @@ export default async function handler(req, res) {
       });
     }
 
+    // Check for other failures (401, 403, 404, etc.)
     const failed = modules.find(({ result }) => !result.response.ok);
     if (failed) {
-      const normalizedError = buildUpstreamError({
+      const errorPayload = buildUpstreamError({
         response: failed.result.response,
         data: failed.result.data,
         module: failed.key,
         fixtureId,
         bookmakerId,
       });
-      console.error('[SPORTMONKS_PROXY_ERROR]', normalizedError);
-      return sendApiError(res, normalizedError);
+      console.error('[SPORTMONKS_PROXY_ERROR]', errorPayload);
+      return sendApiError(res, errorPayload);
     }
 
-    const probabilities = parseRows(probabilitiesResult.data);
+    const predictions = parseRows(predictionsResult.data);
 
+    // Success response with unified data structure
     return res.status(200).json({
       fixtureId: Number(fixtureId),
       bookmakerId: Number(bookmakerId),
+      apiTokenConfigured: Boolean(token),
+      status: 'ok',
       includes: {
         odds: DEFAULT_ODDS_INCLUDE,
-        probabilities: DEFAULT_PROBABILITIES_INCLUDE,
+        predictions: DEFAULT_PREDICTIONS_INCLUDE,
         stats: DEFAULT_STATS_INCLUDE,
       },
       generatedAt: new Date().toISOString(),
       data: {
         odds: parseRows(oddsResult.data),
-        probabilities,
-        predictions: probabilities,
-        stats: parseStatsRows(statsResult.data),
+        predictions: predictions,
+        probabilities: predictions, // Aliased for backward compatibility
+        stats: normalizeStatsRows(statsResult.data),
       },
     });
   } catch (error) {
@@ -151,7 +161,11 @@ export default async function handler(req, res) {
       status: 500,
       code: 'UNIFIED_ODDS_PROXY_ERROR',
       message: 'Failed to fetch unified fixture intelligence data.',
-      context: { detail: error.message, fixtureId, bookmakerId },
+      context: {
+        detail: error.message,
+        fixtureId,
+        bookmakerId,
+      },
     });
   }
 }
