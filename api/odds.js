@@ -128,7 +128,7 @@ export default async function handler(req, res) {
       return sendApiError(res, errorPayload);
     }
 
-    const predictions = parseRows(predictionsResult.data);
+    const predictionsData = parseRows(predictionsResult.data);
 
     // Success response with unified data structure
     return res.status(200).json({
@@ -144,8 +144,8 @@ export default async function handler(req, res) {
       generatedAt: new Date().toISOString(),
       data: {
         odds: parseRows(oddsResult.data),
-        predictions: predictions,
-        probabilities: predictions, // Aliased for backward compatibility
+        predictions: predictionsData,
+        probabilities: predictionsData, // Aliased for backward compatibility
         stats: normalizeStatsRows(statsResult.data),
       },
     });
