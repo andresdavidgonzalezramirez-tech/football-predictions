@@ -1,7 +1,7 @@
 /**
- * Vercel Serverless Function - Unified probabilities proxy
+ * Vercel Serverless Function - Unified predictions proxy
  * Returns predictions + odds + advanced fixture stats in one response.
- * Fail-safe contract: always returns data.odds, data.probabilities, data.predictions, data.stats.
+ * Fail-safe contract: always returns data.odds, data.predictions, and data.stats.
  */
 import {
   PLAN_RESTRICTED_STATUSES,
@@ -161,7 +161,7 @@ export default async function handler(req, res) {
     return sendApiError(res, {
       status: 500,
       code: 'UNIFIED_PREDICTIONS_PROXY_ERROR',
-      message: 'Failed to fetch unified probabilities data.',
+      message: 'Failed to fetch unified predictions data.',
       context: { detail: error.message, fixtureId, bookmakerId },
     });
   }
