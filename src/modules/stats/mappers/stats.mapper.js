@@ -2,7 +2,7 @@ export const mapFixtureStats = (response) => {
   const fixture = response?.data ?? response;
   const stats = fixture?.statistics?.data ?? fixture?.statistics ?? [];
 
-  return stats.map((row) => ({
+  return (Array.isArray(stats) ? stats : []).map((row) => ({
     participantId: row.participant_id ?? null,
     type: row.type?.data?.name ?? row.type?.name ?? 'Stat',
     value: row.data?.value ?? row.value ?? null,
@@ -14,7 +14,7 @@ export const mapFixtureEvents = (response) => {
   const fixture = response?.data ?? response;
   const events = fixture?.events?.data ?? fixture?.events ?? [];
 
-  return events.map((event) => ({
+  return (Array.isArray(events) ? events : []).map((event) => ({
     id: event.id,
     minute: event.minute ?? null,
     extraMinute: event.extra_minute ?? null,

@@ -26,7 +26,8 @@ const OddsOverview = () => {
         setLoading(true);
         setError('');
         const leagues = await getNormalizedLeaguesWithFixtures();
-        const allFixtures = leagues.flatMap((league) => league.upcomingFixtures ?? []);
+        const safeLeagues = Array.isArray(leagues) ? leagues : [];
+        const allFixtures = safeLeagues.flatMap((league) => league.upcomingFixtures ?? []);
         setFixtures(allFixtures);
       } catch (loadError) {
         setError(loadError.message ?? 'No se pudo cargar el listado para odds.');

@@ -11,7 +11,10 @@ const LeagueCard = ({ league }) => {
   const [predictionStatusByFixture, setPredictionStatusByFixture] = useState({});
   const navigate = useNavigate();
 
-  const fixtures = useMemo(() => league?.upcomingFixtures ?? [], [league]);
+  const fixtures = useMemo(
+    () => (Array.isArray(league?.upcomingFixtures) ? league.upcomingFixtures : []),
+    [league],
+  );
 
   const getPredictableBadge = (fixture) => {
     if (fixture.predictable === true || Number(fixture.predictable) > 0) return 'available';
