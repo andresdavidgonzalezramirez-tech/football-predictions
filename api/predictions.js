@@ -48,6 +48,7 @@ const normalizeStatsRows = (fixturePayload) => {
 
 const buildUpstreamError = ({ response, data, module, fixtureId, bookmakerId }) => {
   const restricted = PLAN_RESTRICTED_STATUSES.has(response.status);
+
   return {
     status: response.status,
     code: data?.code || (restricted ? 'PLAN_RESTRICTED' : 'SPORTMONKS_REQUEST_FAILED'),
@@ -130,7 +131,7 @@ export default async function handler(req, res) {
 
     // Respuesta Exitosa Unificada
     const predictionsData = parseRows(predictionsResult.data);
-    
+
     return res.status(200).json({
       fixtureId: Number(fixtureId),
       bookmakerId: Number(bookmakerId),
@@ -144,7 +145,7 @@ export default async function handler(req, res) {
       generatedAt: new Date().toISOString(),
       data: {
         predictions: predictionsData,
-        probabilities: predictionsData, // Alias para fail-safe contract
+        probabilities: predictionsData, // Alias para contrato fail-safe
         odds: parseRows(oddsResult.data),
         stats: normalizeStatsRows(statsResult.data),
       },
