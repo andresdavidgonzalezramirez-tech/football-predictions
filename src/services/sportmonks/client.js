@@ -76,6 +76,39 @@ const isValidPayload = (data) => {
   return true;
 };
 
+const ensureArray = (value) => (Array.isArray(value) ? value : []);
+
+const normalizeUnifiedContract = (payload) => {
+  if (!payload || typeof payload !== 'object') {
+    return { data: { odds: [], probabilities: [], predictions: [], stats: [] } };
+  }
+
+  const rawData = payload.data && typeof payload.data === 'object' ? payload.data : {};
+  const probabilities = ensureArray(rawData.probabilities ?? rawData.predictions);
+
+  return {
+    ...payload,
+    data: {
+      ...rawData,
+      odds: ensureArray(rawData.odds),
+      probabilities,
+      predictions: probabilities,
+      stats: ensureArray(rawData.stats),
+    },
+  };
+};
+
+const validateContract = (payload) => {
+  if (!payload || typeof payload !== 'object') return false;
+  const data = payload.data;
+  if (!data || typeof data !== 'object') return false;
+
+  return Array.isArray(data.odds)
+    && Array.isArray(data.probabilities)
+    && Array.isArray(data.predictions)
+    && Array.isArray(data.stats);
+};
+
 export const fetchFromSportmonks = async ({
   cacheKey,
   endpoint,
@@ -92,12 +125,22 @@ export const fetchFromSportmonks = async ({
   try {
     logApiRequest(endpoint, false);
     const response = await apiClient.get(endpoint, { params });
+    const normalized = normalizeUnifiedContract(response.data);
+    const payloadToReturn = validateContract(normalized) ? normalized : {
+      ...response.data,
+      data: {
+        odds: [],
+        probabilities: [],
+        predictions: [],
+        stats: [],
+      },
+    };
 
-    if (cacheKey && isValidPayload(response.data)) {
-      setCache(cacheKey, response.data, ttl);
+    if (cacheKey && isValidPayload(payloadToReturn)) {
+      setCache(cacheKey, payloadToReturn, ttl);
     }
 
-    return response.data;
+    return payloadToReturn;
   } catch (error) {
     throw mapApiError(error, fallbackMessage);
   }
