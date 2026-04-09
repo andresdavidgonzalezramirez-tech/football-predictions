@@ -1,10 +1,12 @@
 /**
  * Vercel Serverless Function - Unified probabilities proxy
  * Returns predictions + odds + advanced fixture stats in one response.
+ * Fail-safe contract: always returns data.odds, data.probabilities, data.predictions, data.stats.
  */
 import {
   PLAN_RESTRICTED_STATUSES,
   fetchSportmonksPage,
+  getApiToken,
   handleRequestGuards,
   sendApiError,
 } from './_shared.js';
@@ -76,6 +78,8 @@ export default async function handler(req, res) {
     });
   }
 
+  const token = getApiToken();
+
   try {
     const [predictionsResult, oddsResult, statsResult] = await Promise.all([
       fetchSportmonksPage({
@@ -101,6 +105,7 @@ export default async function handler(req, res) {
       { key: 'stats', result: statsResult },
     ];
 
+    // Manejo de Rate Limit (Prioridad 1)
     const rateLimited = modules.find(({ result }) => result.response.status === 429);
     if (rateLimited) {
       return sendApiError(res, {
@@ -111,6 +116,7 @@ export default async function handler(req, res) {
       });
     }
 
+    // Manejo de Errores de Upstream (Prioridad 2)
     const failed = modules.find(({ result }) => !result.response.ok);
     if (failed) {
       return sendApiError(res, buildUpstreamError({
@@ -122,9 +128,14 @@ export default async function handler(req, res) {
       }));
     }
 
+    // Respuesta Exitosa Unificada
+    const predictionsData = parseRows(predictionsResult.data);
+    
     return res.status(200).json({
       fixtureId: Number(fixtureId),
       bookmakerId: Number(bookmakerId),
+      apiTokenConfigured: Boolean(token),
+      status: 'ok',
       includes: {
         predictions: DEFAULT_PREDICTIONS_INCLUDE,
         odds: DEFAULT_ODDS_INCLUDE,
@@ -132,7 +143,8 @@ export default async function handler(req, res) {
       },
       generatedAt: new Date().toISOString(),
       data: {
-        predictions: parseRows(predictionsResult.data),
+        predictions: predictionsData,
+        probabilities: predictionsData, // Alias para fail-safe contract
         odds: parseRows(oddsResult.data),
         stats: normalizeStatsRows(statsResult.data),
       },

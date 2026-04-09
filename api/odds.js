@@ -1,9 +1,11 @@
 /**
  * Vercel Serverless Function - Unified fixture intelligence proxy
  * Returns odds + probabilities + advanced fixture stats in one response.
+ * Fail-safe contract: always returns data.odds, data.predictions, and data.stats.
  */
 import {
   PLAN_RESTRICTED_STATUSES,
+  SPORTMONKS_BASE,
   fetchSportmonksPage,
   getApiToken,
   handleRequestGuards,
@@ -74,8 +76,9 @@ export default async function handler(req, res) {
     });
   }
 
+  const token = getApiToken();
+
   try {
-    const token = getApiToken();
     const [oddsResult, predictionsResult, statsResult] = await Promise.all([
       fetchSportmonksPage({
         path: `/odds/pre-match/fixtures/${fixtureId}/bookmakers/${bookmakerId}`,
@@ -100,6 +103,7 @@ export default async function handler(req, res) {
       { key: 'stats', result: statsResult },
     ];
 
+    // Check for critical errors (429 Rate Limit)
     const rateLimited = modules.find(({ result }) => result.response.status === 429);
     if (rateLimited) {
       return sendApiError(res, {
@@ -110,6 +114,7 @@ export default async function handler(req, res) {
       });
     }
 
+    // Check for other failures (401, 403, 404, etc.)
     const failed = modules.find(({ result }) => !result.response.ok);
     if (failed) {
       return sendApiError(res, buildUpstreamError({
@@ -121,10 +126,12 @@ export default async function handler(req, res) {
       }));
     }
 
+    // Success response with unified data structure
     return res.status(200).json({
       fixtureId: Number(fixtureId),
       bookmakerId: Number(bookmakerId),
       apiTokenConfigured: Boolean(token),
+      status: 'ok',
       includes: {
         odds: DEFAULT_ODDS_INCLUDE,
         predictions: DEFAULT_PREDICTIONS_INCLUDE,
@@ -134,6 +141,7 @@ export default async function handler(req, res) {
       data: {
         odds: parseRows(oddsResult.data),
         predictions: parseRows(predictionsResult.data),
+        probabilities: parseRows(predictionsResult.data), // Aliased for backward compatibility
         stats: normalizeStatsRows(statsResult.data),
       },
     });
