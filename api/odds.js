@@ -1,10 +1,12 @@
 /**
  * Vercel Serverless Function - Unified fixture intelligence proxy
- * Fail-safe contract: always returns data.odds, data.probabilities, data.predictions, data.stats.
+ * Returns odds + probabilities + advanced fixture stats in one response.
+ * Fail-safe contract: always returns data.odds, data.predictions, and data.stats.
  */
 import {
   PLAN_RESTRICTED_STATUSES,
   SPORTMONKS_BASE,
+  fetchSportmonksPage,
   getApiToken,
   handleRequestGuards,
   sendApiError,
@@ -18,7 +20,7 @@ const DEFAULT_ODDS_INCLUDE = [
   'fixture.scores',
 ].join(';');
 
-const DEFAULT_PROBABILITIES_INCLUDE = [
+const DEFAULT_PREDICTIONS_INCLUDE = [
   'type',
   'fixture',
   'fixture.participants',
@@ -30,74 +32,34 @@ const DEFAULT_STATS_INCLUDE = [
   'statistics.details.type',
 ].join(';');
 
-const parseCollection = (payload) => {
+const parseRows = (payload) => {
   if (Array.isArray(payload?.data)) return payload.data;
   if (Array.isArray(payload)) return payload;
   if (Array.isArray(payload?.data?.data)) return payload.data.data;
   return [];
 };
 
-const parseStats = (payload) => {
-  const fixture = payload?.data ?? payload;
-  const statsRows = fixture?.statistics?.data ?? fixture?.statistics;
-  return Array.isArray(statsRows) ? statsRows : [];
+const normalizeStatsRows = (fixturePayload) => {
+  const fixture = fixturePayload?.data ?? fixturePayload;
+  const stats = fixture?.statistics?.data ?? fixture?.statistics;
+  return Array.isArray(stats) ? stats : [];
 };
 
-const buildUrl = ({ path, query = {}, include, token }) => {
-  const params = new URLSearchParams({
-    ...query,
-    include,
-    api_token: token,
-  });
-
-  return `${SPORTMONKS_BASE}${path}?${params.toString()}`;
-};
-
-const fetchSportmonks = async ({ path, query, include, token }) => {
-  const url = buildUrl({ path, query, include, token });
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      Accept: 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  let data = null;
-  try {
-    data = await response.json();
-  } catch {
-    data = null;
-  }
-
-  return { url, response, data };
-};
-
-const normalizeError = ({ module, result, fixtureId, bookmakerId }) => {
-  if (!result) {
-    return {
-      module,
-      status: 500,
-      code: 'UPSTREAM_UNKNOWN_ERROR',
-      message: 'Unknown upstream error',
-      fixtureId,
-      bookmakerId,
-    };
-  }
-
-  const status = result.response?.status ?? 500;
-  const restricted = PLAN_RESTRICTED_STATUSES.has(status);
-
+const buildUpstreamError = ({ response, data, module, fixtureId, bookmakerId }) => {
+  const restricted = PLAN_RESTRICTED_STATUSES.has(response.status);
   return {
-    module,
-    status,
-    code: result.data?.code || (restricted ? 'PLAN_RESTRICTED' : 'SPORTMONKS_REQUEST_FAILED'),
-    message: result.data?.message || (restricted
+    status: response.status,
+    code: data?.code || (restricted ? 'PLAN_RESTRICTED' : 'SPORTMONKS_REQUEST_FAILED'),
+    message: data?.message || (restricted
       ? 'The current Sportmonks plan does not include this module or addon.'
       : `Sportmonks request failed for ${module}.`),
-    fixtureId,
-    bookmakerId,
-    url: result.url,
+    context: {
+      module,
+      fixtureId,
+      bookmakerId: bookmakerId ?? null,
+      upstreamStatus: response.status,
+      upstreamError: data ?? null,
+    },
   };
 };
 
@@ -117,88 +79,70 @@ export default async function handler(req, res) {
   const token = getApiToken();
 
   try {
-    const requests = [
-      {
-        module: 'odds',
+    const [oddsResult, predictionsResult, statsResult] = await Promise.all([
+      fetchSportmonksPage({
         path: `/odds/pre-match/fixtures/${fixtureId}/bookmakers/${bookmakerId}`,
-        include: DEFAULT_ODDS_INCLUDE,
-      },
-      {
-        module: 'probabilities',
+        query: restQuery,
+        defaultParams: { include: DEFAULT_ODDS_INCLUDE },
+      }),
+      fetchSportmonksPage({
         path: `/predictions/probabilities/fixtures/${fixtureId}`,
-        include: DEFAULT_PROBABILITIES_INCLUDE,
-      },
-      {
-        module: 'stats',
+        query: restQuery,
+        defaultParams: { include: DEFAULT_PREDICTIONS_INCLUDE, per_page: 50 },
+      }),
+      fetchSportmonksPage({
         path: `/fixtures/${fixtureId}`,
-        include: DEFAULT_STATS_INCLUDE,
-      },
+        query: restQuery,
+        defaultParams: { include: DEFAULT_STATS_INCLUDE },
+      }),
+    ]);
+
+    const modules = [
+      { key: 'odds', result: oddsResult },
+      { key: 'predictions', result: predictionsResult },
+      { key: 'stats', result: statsResult },
     ];
 
-    const settled = await Promise.allSettled(
-      requests.map((requestConfig) => fetchSportmonks({
-        path: requestConfig.path,
-        query: restQuery,
-        include: requestConfig.include,
-        token,
-      })),
-    );
+    // Check for critical errors (429 Rate Limit)
+    const rateLimited = modules.find(({ result }) => result.response.status === 429);
+    if (rateLimited) {
+      return sendApiError(res, {
+        status: 429,
+        code: 'RATE_LIMIT_EXCEEDED',
+        message: 'Rate limit reached for this entity. Retry with backoff.',
+        context: { module: rateLimited.key, fixtureId, bookmakerId },
+      });
+    }
 
-    const moduleResults = requests.reduce((acc, requestConfig, index) => {
-      const result = settled[index];
-      if (result.status === 'fulfilled') {
-        acc[requestConfig.module] = result.value;
-      } else {
-        acc[requestConfig.module] = null;
-      }
-      return acc;
-    }, {});
+    // Check for other failures (401, 403, 404, etc.)
+    const failed = modules.find(({ result }) => !result.response.ok);
+    if (failed) {
+      return sendApiError(res, buildUpstreamError({
+        response: failed.result.response,
+        data: failed.result.data,
+        module: failed.key,
+        fixtureId,
+        bookmakerId,
+      }));
+    }
 
-    const errors = [];
-
-    Object.entries(moduleResults).forEach(([module, result]) => {
-      if (!result || !result.response?.ok) {
-        const errorItem = normalizeError({
-          module,
-          result,
-          fixtureId: Number(fixtureId),
-          bookmakerId: Number(bookmakerId),
-        });
-        errors.push(errorItem);
-        console.error('[SPORTMONKS_PROXY_ERROR]', errorItem);
-      }
-    });
-
-    const oddsRows = moduleResults.odds?.response?.ok ? parseCollection(moduleResults.odds.data) : [];
-    const probabilitiesRows = moduleResults.probabilities?.response?.ok
-      ? parseCollection(moduleResults.probabilities.data)
-      : [];
-    const statsRows = moduleResults.stats?.response?.ok ? parseStats(moduleResults.stats.data) : [];
-
-    const rateLimited = errors.find((errorItem) => errorItem.status === 429);
-    const authError = errors.find((errorItem) => errorItem.status === 401);
-
+    // Success response with unified data structure
     return res.status(200).json({
       fixtureId: Number(fixtureId),
       bookmakerId: Number(bookmakerId),
-      status: errors.length ? 'partial' : 'ok',
+      apiTokenConfigured: Boolean(token),
+      status: 'ok',
       includes: {
         odds: DEFAULT_ODDS_INCLUDE,
-        probabilities: DEFAULT_PROBABILITIES_INCLUDE,
+        predictions: DEFAULT_PREDICTIONS_INCLUDE,
         stats: DEFAULT_STATS_INCLUDE,
-      },
-      diagnostics: {
-        authorizationHeaderSent: true,
-        rateLimited: Boolean(rateLimited),
-        authError: Boolean(authError),
-        errors,
       },
       generatedAt: new Date().toISOString(),
       data: {
-        odds: oddsRows,
-        probabilities: probabilitiesRows,
-        predictions: probabilitiesRows,
-        stats: statsRows,
+        odds: parseRows(oddsResult.data),
+        predictions: parseRows(predictionsResult.data),
+        probabilities: parseRows(predictionsResult.data), // Aliased for backward compatibility
+        stats: normalizeStatsRows(statsResult.data),
       },
     });
   } catch (error) {
