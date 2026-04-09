@@ -92,12 +92,13 @@ const MarketOverview = () => {
 
   const predictionPreview = (fixtureId) => {
     const market = (predictionsByFixture[fixtureId] ?? [])[0];
-    if (!market?.options?.length) {
+    const options = Array.isArray(market?.options) ? market.options : [];
+    if (!options.length) {
       if (predictionStatusByFixture[fixtureId] === 'restricted') return 'No incluido en tu plan';
       return '—';
     }
 
-    return market.options.slice(0, 3).map((option) => (
+    return options.slice(0, 3).map((option) => (
       <span key={`${fixtureId}-${option.key}`} className="fixture-market-pill">
         {option.label}: {formatProbabilityValue(option.value)}
       </span>
