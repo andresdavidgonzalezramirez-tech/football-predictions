@@ -15,20 +15,16 @@ const DEFAULT_ODDS_INCLUDE = [
   'market',
   'bookmaker',
   'fixture',
-  'fixture.participants',
-  'fixture.scores',
 ].join(';');
 
 const DEFAULT_PREDICTIONS_INCLUDE = [
   'type',
   'fixture',
-  'fixture.participants',
 ].join(';');
 
 const DEFAULT_STATS_INCLUDE = [
   'participants',
   'statistics.type',
-  'statistics.details.type',
 ].join(';');
 
 const parseRows = (payload) => {

@@ -15,7 +15,7 @@ const LandingPage = () => {
       try {
         setLoading(true);
         const normalizedLeagues = await getNormalizedLeaguesWithFixtures();
-        setLeagues(normalizedLeagues);
+        setLeagues(Array.isArray(normalizedLeagues) ? normalizedLeagues : []);
       } catch (err) {
         setError(err.message);
       } finally {

@@ -3,11 +3,15 @@ import { mapFixture } from '../mappers/fixtures.mapper';
 
 export const getNormalizedLeaguesWithFixtures = async () => {
   const response = await fetchLeaguesWithUpcoming();
-  const leagues = response?.data ?? [];
+  const leagues = Array.isArray(response?.data) ? response.data : [];
 
   return leagues.map((league) => ({
     ...league,
-    upcomingFixtures: (league?.upcoming?.data ?? league?.upcoming ?? []).map(mapFixture).filter(Boolean),
+    upcomingFixtures: (Array.isArray(league?.upcoming?.data)
+      ? league.upcoming.data
+      : Array.isArray(league?.upcoming)
+        ? league.upcoming
+        : []).map(mapFixture).filter(Boolean),
   }));
 };
 
