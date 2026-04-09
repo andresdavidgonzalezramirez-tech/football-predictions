@@ -1,11 +1,12 @@
 /**
  * Vercel Serverless Function - Unified fixture intelligence proxy
- * Returns odds + predictions + advanced fixture stats in one response.
+ * Returns odds + probabilities + advanced fixture stats in one response.
  * Fail-safe contract: always returns data.odds, data.predictions, and data.stats.
  */
 import {
   PLAN_RESTRICTED_STATUSES,
   fetchSportmonksPage,
+  getApiToken,
   handleRequestGuards,
   sendApiError,
 } from './_shared.js';
@@ -27,7 +28,6 @@ const DEFAULT_PREDICTIONS_INCLUDE = [
 const DEFAULT_STATS_INCLUDE = [
   'participants',
   'statistics.type',
-  'statistics.details',
   'statistics.details.type',
 ].join(';');
 
@@ -76,6 +76,8 @@ export default async function handler(req, res) {
     });
   }
 
+  const token = getApiToken();
+
   try {
     const [oddsResult, predictionsResult, statsResult] = await Promise.all([
       fetchSportmonksPage({
@@ -101,6 +103,7 @@ export default async function handler(req, res) {
       { key: 'stats', result: statsResult },
     ];
 
+    // Check for critical errors (429 Rate Limit)
     const rateLimited = modules.find(({ result }) => result.response.status === 429);
     if (rateLimited) {
       return sendApiError(res, {
@@ -111,24 +114,28 @@ export default async function handler(req, res) {
       });
     }
 
+    // Check for other failures (401, 403, 404, etc.)
     const failed = modules.find(({ result }) => !result.response.ok);
     if (failed) {
-      const normalizedError = buildUpstreamError({
+      const errorPayload = buildUpstreamError({
         response: failed.result.response,
         data: failed.result.data,
         module: failed.key,
         fixtureId,
         bookmakerId,
       });
-      console.error('[SPORTMONKS_PROXY_ERROR]', normalizedError);
-      return sendApiError(res, normalizedError);
+      console.error('[SPORTMONKS_PROXY_ERROR]', errorPayload);
+      return sendApiError(res, errorPayload);
     }
 
-    const predictions = parseRows(predictionsResult.data);
+    const predictionsData = parseRows(predictionsResult.data);
 
+    // Success response with unified data structure
     return res.status(200).json({
       fixtureId: Number(fixtureId),
       bookmakerId: Number(bookmakerId),
+      apiTokenConfigured: Boolean(token),
+      status: 'ok',
       includes: {
         odds: DEFAULT_ODDS_INCLUDE,
         predictions: DEFAULT_PREDICTIONS_INCLUDE,
@@ -137,7 +144,8 @@ export default async function handler(req, res) {
       generatedAt: new Date().toISOString(),
       data: {
         odds: parseRows(oddsResult.data),
-        predictions,
+        predictions: predictionsData,
+        probabilities: predictionsData, // Aliased for backward compatibility
         stats: normalizeStatsRows(statsResult.data),
       },
     });
@@ -153,7 +161,11 @@ export default async function handler(req, res) {
       status: 500,
       code: 'UNIFIED_ODDS_PROXY_ERROR',
       message: 'Failed to fetch unified fixture intelligence data.',
-      context: { detail: error.message, fixtureId, bookmakerId },
+      context: {
+        detail: error.message,
+        fixtureId,
+        bookmakerId,
+      },
     });
   }
 }

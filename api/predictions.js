@@ -1,11 +1,12 @@
 /**
  * Vercel Serverless Function - Unified predictions proxy
  * Returns predictions + odds + advanced fixture stats in one response.
- * Fail-safe contract: always returns data.odds, data.predictions, data.stats.
+ * Fail-safe contract: always returns data.odds, data.predictions, and data.stats.
  */
 import {
   PLAN_RESTRICTED_STATUSES,
   fetchSportmonksPage,
+  getApiToken,
   handleRequestGuards,
   sendApiError,
 } from './_shared.js';
@@ -29,7 +30,6 @@ const DEFAULT_PREDICTIONS_INCLUDE = [
 const DEFAULT_STATS_INCLUDE = [
   'participants',
   'statistics.type',
-  'statistics.details',
   'statistics.details.type',
 ].join(';');
 
@@ -77,6 +77,8 @@ export default async function handler(req, res) {
     });
   }
 
+  const token = getApiToken();
+
   try {
     const [predictionsResult, oddsResult, statsResult] = await Promise.all([
       fetchSportmonksPage({
@@ -102,6 +104,7 @@ export default async function handler(req, res) {
       { key: 'stats', result: statsResult },
     ];
 
+    // Manejo de Rate Limit (Prioridad 1)
     const rateLimited = modules.find(({ result }) => result.response.status === 429);
     if (rateLimited) {
       return sendApiError(res, {
@@ -112,6 +115,7 @@ export default async function handler(req, res) {
       });
     }
 
+    // Manejo de Errores de Upstream (Prioridad 2)
     const failed = modules.find(({ result }) => !result.response.ok);
     if (failed) {
       const normalizedError = buildUpstreamError({
@@ -125,11 +129,14 @@ export default async function handler(req, res) {
       return sendApiError(res, normalizedError);
     }
 
-    const predictions = parseRows(predictionsResult.data);
+    // Respuesta Exitosa Unificada
+    const predictionsData = parseRows(predictionsResult.data);
 
     return res.status(200).json({
       fixtureId: Number(fixtureId),
       bookmakerId: Number(bookmakerId),
+      apiTokenConfigured: Boolean(token),
+      status: 'ok',
       includes: {
         predictions: DEFAULT_PREDICTIONS_INCLUDE,
         odds: DEFAULT_ODDS_INCLUDE,
@@ -137,7 +144,8 @@ export default async function handler(req, res) {
       },
       generatedAt: new Date().toISOString(),
       data: {
-        predictions,
+        predictions: predictionsData,
+        probabilities: predictionsData, // Alias para contrato fail-safe
         odds: parseRows(oddsResult.data),
         stats: normalizeStatsRows(statsResult.data),
       },
